@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>z - Advanced topic: Reproducible Analytical Pipelines with Nix</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">z - Advanced topic: Reproducible Analytical
+Pipelines with Nix</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Isolated environments are great to run pipelines in a safe and
+reproducible manner. This vignette details how to build a reproducible
+analytical pipeline using an environment built with Nix that contains
+the right version of R and packages.</p>
+</div>
+<div id="an-example-of-a-reproducible-analytical-pipeline-using-nix" class="section level2">
+<h2>An example of a reproducible analytical pipeline using Nix</h2>
+<p>Suppose that you’ve used <code>{targets}</code> to build a pipeline
+for a project and that you did so using a tailor-made Nix environment.
+Here is the call to <code>rix()</code> that you could have used to build
+that environment:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.2&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;targets&quot;</span>, <span class="st">&quot;tarchetypes&quot;</span>, <span class="st">&quot;rmarkdown&quot;</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  ),</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>)</span></code></pre></div>
+<p>This call to <code>rix()</code> generates the following
+<code>default.nix</code> file:</p>
+<pre><code>#&gt; # This file was generated by the {rix} R package v0.12.1 on 2024-09-24
+#&gt; # with following call:
+#&gt; # &gt;rix(r_ver = &quot;8ad5e8132c5dcf977e308e7bf5517cc6cc0bf7d8&quot;,
+#&gt; #  &gt; r_pkgs = c(&quot;targets&quot;,
+#&gt; #  &gt; &quot;tarchetypes&quot;,
+#&gt; #  &gt; &quot;rmarkdown&quot;),
+#&gt; #  &gt; system_pkgs = NULL,
+#&gt; #  &gt; git_pkgs = list(package_name = &quot;housing&quot;,
+#&gt; #  &gt; repo_url = &quot;https://github.com/rap4all/housing/&quot;,
+#&gt; #  &gt; commit = &quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;),
+#&gt; #  &gt; ide = &quot;other&quot;,
+#&gt; #  &gt; project_path = path_default_nix,
+#&gt; #  &gt; overwrite = TRUE)
+#&gt; # It uses nixpkgs&#39; revision 8ad5e8132c5dcf977e308e7bf5517cc6cc0bf7d8 for reproducibility purposes
+#&gt; # which will install R version 4.2.2.
+#&gt; # Report any issues to https://github.com/ropensci/rix
+#&gt; let
+#&gt;  pkgs = import (fetchTarball &quot;https://github.com/NixOS/nixpkgs/archive/8ad5e8132c5dcf977e308e7bf5517cc6cc0bf7d8.tar.gz&quot;) {};
+#&gt;  
+#&gt;   rpkgs = builtins.attrValues {
+#&gt;     inherit (pkgs.rPackages) 
+#&gt;       rmarkdown
+#&gt;       tarchetypes
+#&gt;       targets;
+#&gt;   };
+#&gt;  
+#&gt;   git_archive_pkgs = [
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;housing&quot;;
+#&gt;       src = pkgs.fetchgit {
+#&gt;         url = &quot;https://github.com/rap4all/housing/&quot;;
+#&gt;         rev = &quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;;
+#&gt;         sha256 = &quot;sha256-s4KGtfKQ7hL0sfDhGb4BpBpspfefBN6hf+XlslqyEn4=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages) 
+#&gt;           dplyr
+#&gt;           ggplot2
+#&gt;           janitor
+#&gt;           purrr
+#&gt;           readxl
+#&gt;           rlang
+#&gt;           rvest
+#&gt;           stringr
+#&gt;           tidyr;
+#&gt;       };
+#&gt;     })
+#&gt;    ];
+#&gt;    
+#&gt;   system_packages = builtins.attrValues {
+#&gt;     inherit (pkgs) 
+#&gt;       glibcLocales
+#&gt;       nix
+#&gt;       R;
+#&gt;   };
+#&gt;   
+#&gt; in
+#&gt; 
+#&gt; pkgs.mkShell {
+#&gt;   LOCALE_ARCHIVE = if pkgs.system == &quot;x86_64-linux&quot; then &quot;${pkgs.glibcLocales}/lib/locale/locale-archive&quot; else &quot;&quot;;
+#&gt;   LANG = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_ALL = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_TIME = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MONETARY = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_PAPER = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MEASUREMENT = &quot;en_US.UTF-8&quot;;
+#&gt; 
+#&gt;   buildInputs = [ git_archive_pkgs rpkgs  system_packages   ];
+#&gt;   
+#&gt; }</code></pre>
+<p>The environment that gets built from this <code>default.nix</code>
+file contains R version 4.2.2, the <code>{targets}</code> and
+<code>{tarchetypes}</code> packages, as well as the
+<code>{housing}</code> packages, which is a package that is hosted on
+GitHub only with some data and useful functions for the project. Because
+it is on Github, it gets installed using the <code>buildRPackage</code>
+function from Nix. You can use this environment to work on you project,
+or to launch a <code>{targets}</code> pipeline. <a href="https://github.com/b-rodrigues/nix_targets_pipeline/tree/master">This
+Github repository</a> contains the finalized project.</p>
+<p>On your local machine, you could execute the pipeline in the
+environment by running this in a terminal:</p>
+<pre><code>cd /absolute/path/to/housing/ &amp;&amp; nix-shell default.nix --run &quot;Rscript -e &#39;targets::tar_make()&#39;&quot;</code></pre>
+<p>If you wish to run the pipeline whenever you drop into the Nix shell,
+you could add a <em>Shell-hook</em> to the generated
+<code>default.nix</code> file:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.2&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;targets&quot;</span>, <span class="st">&quot;tarchetypes&quot;</span>, <span class="st">&quot;rmarkdown&quot;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  ),</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">shell_hook =</span> <span class="st">&quot;Rscript -e &#39;targets::tar_make()&#39;&quot;</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>)</span></code></pre></div>
+<p>Now, each time you drop into the Nix shell for that project using
+<code>nix-shell</code>, the pipeline gets automatically executed.
+<code>{rix}</code> also features a function called
+<code>tar_nix_ga()</code> that adds a GitHub Actions workflow file to
+make the pipeline run automatically on GitHub Actions. The GitHub
+repository linked above has such a file, so each time changes get
+pushed, the pipeline runs on Github Actions and the results are
+automatically pushed to a branch called <code>targets-runs</code>. See
+the workflow file <a href="https://github.com/b-rodrigues/nix_targets_pipeline/blob/master/.github/workflows/run-pipeline.yaml">here</a>.
+This feature is very heavily inspired and adapted from the
+<code>targets::github_actions()</code> function.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

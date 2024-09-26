@@ -1,6 +1,6 @@
-fc8d8ee63b365ed21506edffdb1b44cc *DESCRIPTION
+84ea88b298288ae88fecaab3013a1aff *DESCRIPTION
 f4689a78beb0b9fdfffba45cd589996c *NAMESPACE
-36feaeb9351c1807c92cf5ab966ef993 *NEWS.md
+65c19f69c18c91855797b4bff34ef828 *NEWS.md
 c86e6be2f410eac7210b38cf007d81af *R/available_r.R
 02a60b31d902d8e0e12fca926811fd33 *R/detect_os.R
 1b54f84c6d258f633d6e8410db9d691b *R/detect_versions.R
@@ -20,7 +20,7 @@ bd9bc25b2dc18a67f235465aba48f146 *R/rix_helpers.R
 9b1684c43963d7ca96678488bf0facf1 *R/with_nix.R
 a94eddc6918174aad171265b0d13968a *R/with_nix_helpers.R
 ee2d144299094106b5ff24093c29fb2c *R/zzz.R
-fce236ec151d039ebf31441828bba7e8 *README.md
+00fd2808b6647797d241d677ccf8fba6 *README.md
 190d0644161112e51a86ae0688ba06f7 *build/vignette.rds
 1d346ee70438de896746c77845f5cab4 *inst/doc/a-getting-started.R
 3b368740d1296dd6c6acad0757c01025 *inst/doc/a-getting-started.Rmd
@@ -51,10 +51,10 @@ b85b261ecf85bdfb479d78180b52bc71 *inst/doc/z-advanced-topic-building-an-environm
 f1fe4b7815c8d9357e9ef568508b8627 *inst/doc/z-advanced-topic-handling-packages-with-remote-dependencies.html
 eb088701fdb7e530d31e028fee300430 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.R
 41ce27ab6018157594782e908d9355e9 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.Rmd
-37d1afea5d8a48d3ad5a3536787e71ce *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.html
+406c9e4771a5dc1030275027237565e3 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.html
 bc33b6df197bbd9c891d0663f71cf0fa *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.R
 65f4349bd7094eb9845870a38dd7de64 *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.Rmd
-8acb03171c0e785e37786f875f9c4501 *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.html
+d80d96bdcaec77b46fa7e17c4666b932 *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.html
 596f61e8033e1a9c36b9942e25c936f3 *inst/doc/z-advanced-topic-using-nix-inside-docker.R
 9819390030ebe5aaaec838968dafa6f6 *inst/doc/z-advanced-topic-using-nix-inside-docker.Rmd
 ef9fa047aaa63c8b898ce84032e426df *inst/doc/z-advanced-topic-using-nix-inside-docker.html
@@ -68,10 +68,10 @@ a7bfde2024021ed9d15d0a5dea28a557 *inst/doc/z-contributing_to_nixpkgs.R
 5560bd45a9fa31ecb10896aa3383e49d *inst/doc/z-contributing_to_nixpkgs.Rmd
 e9063ec3d75150233950f1865878206f *inst/doc/z-contributing_to_nixpkgs.html
 e6e25864877a0b098e05b6aef99a4111 *inst/extdata/cachix_dev_env.yaml
-ffb8e92fb2e273711f7f506d5729d76b *inst/extdata/default.nix
+182a0f7ab77cc56efe7cfc5969112e56 *inst/extdata/default.nix
 2c36b1eeff3746b4413a2daca923d380 *inst/extdata/run-pipeline.yaml
 7b99216754d08ee26451024b3c78cd62 *man/available_r.Rd
-5c17fa60b7102b0b19c07ffb75a993b3 *man/figures/logo.png
+5a287113c34ef17bbbccdb075ac3a3dd *man/figures/logo.png
 c1aaea7e0b34d9d0dd1e05f6829bc60f *man/ga_cachix.Rd
 032a3dfddf551c9f32fa171c20d060d3 *man/generate_rpkgs.Rd
 608efa562c18a69d54536c5a4107a6b7 *man/nix_build.Rd

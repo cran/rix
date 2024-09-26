@@ -14,6 +14,7 @@
 
 [![R-hub
 v2](https://github.com/ropensci/rix/actions/workflows/rhub.yaml/badge.svg)](https://github.com/ropensci/rix/actions/workflows/rhub.yaml/)
+[![CRAN](https://www.r-pkg.org/badges/version/rix)](https://CRAN.R-project.org/package=rix)
 [![runiverse-package
 rix](https://ropensci.r-universe.dev/badges/rix?scale=1&color=pink&style=round)](https://ropensci.r-universe.dev/rix)
 [![Docs](https://img.shields.io/badge/docs-release-blue.svg)](https://docs.ropensci.org/rix/)
@@ -44,10 +45,10 @@ While Nix has a steep learning curve, `{rix}`
     evaluate the same code in different development environments, and
     finally to deploy software environments in production.
 
-Nix includes nearly all CRAN advanced Bioconductor packages, with the
-ability to install specific package versions or GitHub snapshots. Nix
-also includes Python, Julia (and many of their respective packages) as
-well as many, many other tools (up to 100’000 pieces of software as of
+Nix includes nearly all CRAN and Bioconductor packages, with the ability
+to install specific package versions or GitHub snapshots. Nix also
+includes Python, Julia (and many of their respective packages) as well
+as many, many other tools (up to 100’000 pieces of software as of
 writing).
 
 If you have R installed, you can start straight away from your R session

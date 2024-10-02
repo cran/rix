@@ -1,6 +1,6 @@
-84ea88b298288ae88fecaab3013a1aff *DESCRIPTION
+8f6987fdb9423e79f801206d1df8ce12 *DESCRIPTION
 f4689a78beb0b9fdfffba45cd589996c *NAMESPACE
-65c19f69c18c91855797b4bff34ef828 *NEWS.md
+1bf3aaf70ba4eb1ff24efb3a135c1830 *NEWS.md
 c86e6be2f410eac7210b38cf007d81af *R/available_r.R
 02a60b31d902d8e0e12fca926811fd33 *R/detect_os.R
 1b54f84c6d258f633d6e8410db9d691b *R/detect_versions.R
@@ -14,13 +14,13 @@ e50e31bbd01f010fc08eb65e0002a9d8 *R/ga_cachix.R
 dc081ba6f4cb52c8a1c6a7e1d16821d2 *R/nix_hash.R
 a303cb160f4dc110c96018d4cd63fec9 *R/rix.R
 bd9bc25b2dc18a67f235465aba48f146 *R/rix_helpers.R
-863f781391f1d42545c96622f0f51307 *R/rix_init.R
+96d3688550da4612b26642892c6f9979 *R/rix_init.R
 8ad1cdf2b9147392e11e7a48be05df24 *R/sysdata.rda
 26072d6466882230058876a46cc4b7a8 *R/tar_nix_ga.R
 9b1684c43963d7ca96678488bf0facf1 *R/with_nix.R
 a94eddc6918174aad171265b0d13968a *R/with_nix_helpers.R
 ee2d144299094106b5ff24093c29fb2c *R/zzz.R
-00fd2808b6647797d241d677ccf8fba6 *README.md
+b6b1e9f4904634270fb86ab2b386dc45 *README.md
 190d0644161112e51a86ae0688ba06f7 *build/vignette.rds
 1d346ee70438de896746c77845f5cab4 *inst/doc/a-getting-started.R
 3b368740d1296dd6c6acad0757c01025 *inst/doc/a-getting-started.Rmd
@@ -51,10 +51,10 @@ b85b261ecf85bdfb479d78180b52bc71 *inst/doc/z-advanced-topic-building-an-environm
 f1fe4b7815c8d9357e9ef568508b8627 *inst/doc/z-advanced-topic-handling-packages-with-remote-dependencies.html
 eb088701fdb7e530d31e028fee300430 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.R
 41ce27ab6018157594782e908d9355e9 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.Rmd
-406c9e4771a5dc1030275027237565e3 *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.html
+8a9f09e35a0d628832c13dcdbf4f5ecd *inst/doc/z-advanced-topic-reproducible-analytical-pipelines-with-nix.html
 bc33b6df197bbd9c891d0663f71cf0fa *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.R
 65f4349bd7094eb9845870a38dd7de64 *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.Rmd
-d80d96bdcaec77b46fa7e17c4666b932 *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.html
+9e20ba0e12483ae7dee691b8be512c9d *inst/doc/z-advanced-topic-running-r-or-shell-code-in-nix-from-r.html
 596f61e8033e1a9c36b9942e25c936f3 *inst/doc/z-advanced-topic-using-nix-inside-docker.R
 9819390030ebe5aaaec838968dafa6f6 *inst/doc/z-advanced-topic-using-nix-inside-docker.Rmd
 ef9fa047aaa63c8b898ce84032e426df *inst/doc/z-advanced-topic-using-nix-inside-docker.html
@@ -68,7 +68,7 @@ a7bfde2024021ed9d15d0a5dea28a557 *inst/doc/z-contributing_to_nixpkgs.R
 5560bd45a9fa31ecb10896aa3383e49d *inst/doc/z-contributing_to_nixpkgs.Rmd
 e9063ec3d75150233950f1865878206f *inst/doc/z-contributing_to_nixpkgs.html
 e6e25864877a0b098e05b6aef99a4111 *inst/extdata/cachix_dev_env.yaml
-182a0f7ab77cc56efe7cfc5969112e56 *inst/extdata/default.nix
+efcfc2d49a70b62fd2bfdafd2626b20e *inst/extdata/default.nix
 2c36b1eeff3746b4413a2daca923d380 *inst/extdata/run-pipeline.yaml
 7b99216754d08ee26451024b3c78cd62 *man/available_r.Rd
 5a287113c34ef17bbbccdb075ac3a3dd *man/figures/logo.png
@@ -89,6 +89,7 @@ da71ec5d9634a3f1dbb9126b96442688 *tests/testthat/_snaps/rix/one_git_default.nix
 f81271dc0229082429c25f0d54e805f1 *tests/testthat/_snaps/rix/other_default.nix
 5053c8a0fb70f02c04d7dc7571e31c96 *tests/testthat/_snaps/rix/rstudio_default.nix
 0a5932de883a0e31e13dd085c6d183c4 *tests/testthat/_snaps/rix/yes_quarto_default.nix
+90c2a85aa4afa8bbc90c29068e3d3ded *tests/testthat/_snaps/rix_init/append_Rprofile.txt
 bd6ba13862c364720b97fc54f7a3ec0d *tests/testthat/_snaps/rix_init/golden_Rprofile.txt
 2c36b1eeff3746b4413a2daca923d380 *tests/testthat/_snaps/tar_nix_ga/run-pipeline.yaml
 b314e57dcfc57926840d6de063bae330 *tests/testthat/result
@@ -101,7 +102,7 @@ f32338b7b1ccc5cdab939d384dca2022 *tests/testthat/test-get_latest.R
 51bc7b7ddf8660f18aba1c9e7a3da921 *tests/testthat/test-get_sri_hash_deps.R
 530b290ffb0ec812738cdbda280681c1 *tests/testthat/test-nix_build.R
 0fcaa840b8d5a3c4d82358a92dcf1225 *tests/testthat/test-rix.R
-521ae1bccab9934379067e73acc75fa8 *tests/testthat/test-rix_init.R
+37e4c8e8464beb6e902d49dfee7bfdcf *tests/testthat/test-rix_init.R
 cd276c8008935e8636bb83f3790a237f *tests/testthat/test-tar_nix_ga.R
 4c043859bb3792d009812bd097b0c2a1 *tests/testthat/test-with_nix.R
 3b368740d1296dd6c6acad0757c01025 *vignettes/a-getting-started.Rmd

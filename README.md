@@ -35,6 +35,15 @@ Use cases include running web apps (e.g., Shiny, `{plumber}` APIs) or
 which snapshots package versions, `{rix}` provides an entire ecosystem
 snapshot, including system-level dependencies.
 
+*Important sidenote: as it so happened, there is currently a bug in the
+released CRAN version that we thought we had solved, which we did, but
+only partially. When running `rix::rix()` two files should be generated:
+a `default.nix` and an `.Rprofile` for your project. It turns out that
+this file can be empty. If it is, run
+`rix::rix_init(rprofile_action = "overwrite")` to generate a proper
+`.Rprofile`. This is important, especially on Mac or if you have a
+system-wide library of packages! We will submit a fix asap.*
+
 While Nix has a steep learning curve, `{rix}`
 
 1.  simplifies creating Nix expressions, which define reproducible
@@ -44,6 +53,9 @@ While Nix has a steep learning curve, `{rix}`
 3.  provides helpers that make it easy to build those environments,
     evaluate the same code in different development environments, and
     finally to deploy software environments in production.
+
+If you want to watch a 5-Minute video introduction click
+[here](https://youtu.be/OOu6gjQ310c?si=qQ5lUhAg5U-WT2W1).
 
 Nix includes nearly all CRAN and Bioconductor packages, with the ability
 to install specific package versions or GitHub snapshots. Nix also

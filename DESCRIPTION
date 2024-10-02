@@ -1,6 +1,6 @@
 Package: rix
 Title: Reproducible Data Science Environments with 'Nix'
-Version: 0.12.3
+Version: 0.12.4
 Authors@R: c(
     person("Bruno", "Rodrigues", , "bruno@brodrigues.co", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3211-3689")),
@@ -33,7 +33,7 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-09-26 18:12:17 UTC; b-rodrigues
+Packaged: 2024-10-02 19:22:59 UTC; b-rodrigues
 Author: Bruno Rodrigues [aut, cre] (<https://orcid.org/0000-0002-3211-3689>),
   Philipp Baumann [aut] (<https://orcid.org/0000-0002-3194-8975>),
   David Watkins [rev] (David reviewed the package (v. 0.9.1) for
@@ -44,4 +44,4 @@ Author: Bruno Rodrigues [aut, cre] (<https://orcid.org/0000-0002-3211-3689>),
     <https://github.com/ropensci/software-review/issues/625>)
 Maintainer: Bruno Rodrigues <bruno@brodrigues.co>
 Repository: CRAN
-Date/Publication: 2024-09-26 21:10:03 UTC
+Date/Publication: 2024-10-02 20:20:05 UTC

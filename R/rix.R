@@ -5,15 +5,21 @@
 #'   package manager, and `.Rprofile` ensures that a running R session from a
 #'   Nix environment cannot access local libraries, nor install packages using
 #'   `install.packages()` (nor remove nor update them).
-#' @param r_ver Character, defaults to "latest". The required R version, for
+#' @param r_ver Character. The required R version, for
 #'   example "4.0.0". You can check which R versions are available using
-#'   `available_r()`. For reproducibility purposes, you can also provide a
+#'   `available_r()`, and for more details check `available_df()`.
+#'   For reproducibility purposes, you can also provide a
 #'   `nixpkgs` revision directly. For older versions of R, `nix-build` might
 #'   fail with an error stating 'this derivation is not meant to be built'. In
 #'   this case, simply drop into the shell with `nix-shell` instead of building
-#'   it first. It is also possible to provide either "bleeding_edge" or
-#'   "frozen_edge" if you need an environment with bleeding edge packages. Read
+#'   it first. It is also possible to provide either "bleeding-edge" or
+#'   "frozen-edge" if you need an environment with bleeding edge packages. Read
 #'   more in the "Details" section below.
+#' @param date Character. Instead of providing `r_ver`, it is also possible
+#'   to provide a date. This will build an environment containing R and R
+#'   packages (and other dependencies) as of that date. You can check which
+#'   dates are available with `available_dates()`. For more details about versions
+#'   check `available_df()`.
 #' @param r_pkgs Vector of characters. List the required R packages for your
 #'   analysis here.
 #' @param system_pkgs Vector of characters. List further software you wish to
@@ -34,7 +40,7 @@
 #'   for Visual Studio Code. You can also use "radian", an interactive REPL. For
 #'   other editors, use "other". This has been tested with RStudio, VS Code and
 #'   Emacs. If other editors don't work, please open an issue.
-#' @param project_path Character. Where to write `default.nix`, for example
+#' @param project_path Character, where to write `default.nix`, for example
 #'   "/home/path/to/project". The file will thus be written to the file
 #'   "/home/path/to/project/default.nix". If the folder does not exist, it will
 #'   be created.
@@ -51,14 +57,16 @@
 #' default, using `nix-shell default.nix` will start a specific program,
 #' possibly with flags (separated by space), and/or do shell actions. You can
 #' for example use `shell_hook = R`, if you want to directly enter the declared
-#' Nix R session when dropping into the Nix shell. @details This function will
-#' write a `default.nix` and an `.Rprofile` in the chosen path. Using the Nix
-#' package manager, it is then possible to build a reproducible development
-#' environment using the `nix-build` command in the path. This environment will
-#' contain the chosen version of R and packages, and will not interfere with any
-#' other installed version (via Nix or not) on your machine. Every dependency,
-#' including both R package dependencies but also system dependencies like
-#' compilers will get installed as well in that environment.
+#' Nix R session when dropping into the Nix shell.
+#'
+#' @details This function will write a `default.nix` and an `.Rprofile` in the
+#'   chosen path. Using the Nix package manager, it is then possible to build a
+#'   reproducible development environment using the `nix-build` command in the
+#'   path. This environment will contain the chosen version of R and packages,
+#'   and will not interfere with any other installed version (via Nix or not) on
+#'   your machine. Every dependency, including both R package dependencies but
+#'   also system dependencies like compilers will get installed as well in that
+#'   environment.
 #'
 #'   It is possible to use environments built with Nix interactively, either
 #'   from the terminal, or using an interface such as RStudio. If you want to
@@ -74,7 +82,7 @@
 #'   argument to `"other"`. We recommend reading the
 #'   `vignette("e-interactive-use")` for more details.
 #'
-#'   Packages to install from Github or Gitlab must be provided in a list of 3
+#'   Packages to install from GitHub or Gitlab must be provided in a list of 3
 #'   elements: "package_name", "repo_url" and "commit". To install several
 #'   packages, provide a list of lists of these 3 elements, one per package to
 #'   install. It is also possible to install old versions of packages by
@@ -88,7 +96,7 @@
 #'   the Nix revision closest to that date, by setting `r_ver = "3.1.0"`, which
 #'   was the version of R current at the time. This ensures that Nix builds a
 #'   completely coherent environment. For security purposes, users that wish to
-#'   install packages from Github/Gitlab or from the CRAN archives must provide
+#'   install packages from GitHub/Gitlab or from the CRAN archives must provide
 #'   a security hash for each package. `{rix}` automatically precomputes this
 #'   hash for the source directory of R packages from GitHub/Gitlab or from the
 #'   CRAN archives, to make sure the expected trusted sources that match the
@@ -104,7 +112,7 @@
 #'   Note that installing packages from Git or old versions using the `"@"`
 #'   notation or local packages, does not leverage Nix's capabilities for
 #'   dependency solving. As such, you might have trouble installing these
-#'   packages. If that is the case, open an issue on `{rix}`'s Github
+#'   packages. If that is the case, open an issue on `{rix}`'s GitHub
 #'   repository.
 #'
 #'   By default, the Nix shell will be configured with `"en_US.UTF-8"` for the
@@ -116,27 +124,32 @@
 #'   list(LANG = "de_CH.UTF-8", <...>)` and the aforementioned locale variable
 #'   names.
 #'
-#'   It is possible to use `"bleeding_edge`" or `"frozen_edge`" as the value for
+#'   It is possible to use `"bleeding-edge`" or `"frozen-edge`" as the value for
 #'   the `r_ver` argument. This will create an environment with the very latest
-#'   R packages. `"bleeding_edge`" means that every time you will build the
+#'   R packages. `"bleeding-edge`" means that every time you will build the
 #'   environment, the packages will get updated. This is especially useful for
 #'   environments that need to be constantly updated, for example when
-#'   developing a package. In contrast, `"frozen_edge`" will create an
+#'   developing a package. In contrast, `"frozen-edge`" will create an
 #'   environment that will remain stable at build time. So if you create a
-#'   `default.nix` file using `"bleeding_edge`", each time you build it using
-#'   `nix-build` that environment will be up-to-date. With `"frozen_edge`" that
+#'   `default.nix` file using `"bleeding-edge`", each time you build it using
+#'   `nix-build` that environment will be up-to-date. With `"frozen-edge`" that
 #'   environment will be up-to-date on the date that the `default.nix` will be
 #'   generated, and then each subsequent call to `nix-build` will result in the
-#'   same environment. We highly recommend you read the vignette titled
+#'   same environment. `"bioc-devel"` is the same as `"bleeding-edge"`, but also
+#'   adds the development version of Bioconductor. `"r-devel"` is the same as
+#'   bleeding edge, but with the R development version instead of the latest
+#'   stable version and `"r-devel-bioc-devel"` is the same as `"r-devel"` but
+#'   with Bioconductor on the development version. We highly recommend you read
+#'   the vignette titled
 #'   "z - Advanced topic: Understanding the rPackages set release cycle and
 #'   using bleeding edge packages".
 #' @export
 #' @examples
 #' \dontrun{
-#' # Build an environment with the latest version of R
+#' # Build an environment with the latest version of R available from Nixpkgs
 #' # and the dplyr and ggplot2 packages
 #' rix(
-#'   r_ver = "latest",
+#'   r_ver = "latest-upstream",
 #'   r_pkgs = c("dplyr", "ggplot2"),
 #'   system_pkgs = NULL,
 #'   git_pkgs = NULL,
@@ -149,7 +162,8 @@
 #'   shell_hook = NULL
 #' )
 #' }
-rix <- function(r_ver = "latest",
+rix <- function(r_ver = NULL,
+                date = NULL,
                 r_pkgs = NULL,
                 system_pkgs = NULL,
                 git_pkgs = NULL,
@@ -165,36 +179,29 @@ rix <- function(r_ver = "latest",
     choices = c("quiet", "simple", "verbose")
   )
 
+  if (!is.null(date) && !(date %in% available_dates())) {
+    # nolint start: line_length_linter
+    stop("The provided date is not available.\nRun available_dates() to see which dates are available.")
+    # nolint end
+  }
+
+  if (!is.null(date) && !is.null(r_ver)) {
+    stop("Provide either an R version or a date, not both.")
+  }
+
+  if (is.null(date) && r_ver == "latest") {
+    stop("'latest' was deprecated in favour of latest-upstream as of version 0.14.0.")
+  }
+
   if (
     !(message_type %in% c("simple", "quiet")) &&
-      r_ver %in% c("bleeding_edge", "frozen_edge")
+      r_ver %in% c("bleeding-edge", "frozen-edge", "r-devel", "bioc-devel", "r-devel-bioc-devel")
   ) {
     warning(
-      "You chose 'bleeding_edge' or 'frozen_edge' as the value for
-`r_ver`. Please read the vignette
-https://docs.ropensci.org/rix/articles/z-bleeding_edge.html
+      "You chose 'bleeding-edge', 'frozen-edge', 'r-devel', 'bioc-devel' or 'r-devel-bioc-devel'
+as the value for `r_ver`. Please read the vignette
+https://docs.ropensci.org/rix/articles/z-bleeding-edge.html
 before continuing."
-    )
-  }
-
-  if (
-    message_type != "quiet" && r_ver %in% available_r() &&
-      r_ver != "latest" && r_ver <= "4.1.1"
-  ) {
-    warning(
-      "You are generating an expression for an older version of R.\n",
-      "To use this environment, you should directly use `nix-shell` and not ",
-      "try to build it first using `nix-build`."
-    )
-  }
-
-  if (message_type != "quiet" && r_ver == "4.4.0") {
-    warning(
-      paste0(
-        "You chose '4.4.0' as the R version, however this version is not ",
-        "available in nixpkgs. The generated expression will thus install ",
-        "R version 4.4.1."
-      )
     )
   }
 
@@ -247,9 +254,9 @@ for more details."
   # nolint end
 
   # Find url to use
-  # In case of bleeding or frozen edge, the rstats-on-nix/nixpkgs
+  # In all cases but 'latest-upstream', the rstats-on-nix/nixpkgs
   # fork is used. Otherwise, upstream NixOS/nixpkgs
-  nix_repo <- make_nixpkgs_url(r_ver)
+  nix_repo <- make_nixpkgs_url(r_ver, date)
 
   rix_call <- match.call()
 
@@ -275,9 +282,26 @@ for more details."
 
   # If there are R packages from Git, passes the string "git_archive_pkgs" to buildInputs
   flag_git_archive <- if (
-    !is.null(cran_pkgs$archive_pkgs) || !is.null(git_pkgs)
+    !is.null(git_pkgs) || !is.null(cran_pkgs$archive_pkgs)
   ) {
-    "git_archive_pkgs"
+    # If git_pkgs is a list of lists, then sapply will succeed
+    # if not, then we can access "package_name" directly
+    git_pkgs_names <- if (!is.null(git_pkgs)) {
+      tryCatch(
+        sapply(git_pkgs, function(x) x$package_name),
+        error = function(e) git_pkgs$package_name
+      )
+    }
+    # CRAN archive pkgs are written as "AER@123"
+    # so we need to split at the '@' character and then
+    # walk through the list to grab the first element
+    # which will be the name of the package
+    cran_archive_names <- if (!is.null(cran_pkgs$archive_pkgs)) {
+      pkgs <- strsplit(cran_pkgs$archive_pkgs, split = "@")
+      sapply(pkgs, function(x) x[[1]])
+    }
+
+    paste0(c(git_pkgs_names, cran_archive_names), collapse = " ")
   } else {
     ""
   }

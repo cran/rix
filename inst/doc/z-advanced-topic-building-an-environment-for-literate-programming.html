@@ -587,14 +587,14 @@ these two lines do:</p>
 export HOME=$PWD/home</code></pre>
 <p>(<code>$PWD</code> —Print Working Directory— is a shell variable
 referring to the current working directory.)</p>
-<p>Now, we need to install the template that we cloned from Github. For
+<p>Now, we need to install the template that we cloned from GitHub. For
 this we can use <code>quarto add</code> just as before, but instead of
-installing it directly from Github, we install it from the repository
+installing it directly from GitHub, we install it from the repository
 that we cloned. We also add the <code>--no-prompt</code> flag so that
 the template gets installed without asking us for confirmation. This is
 similar to how when building a Docker image, we don’t want any
 interactive prompt to show up, or else the process will get stuck.
-<code>$src</code> refers to the path of our downloaded Github
+<code>$src</code> refers to the path of our downloaded GitHub
 repository. Finally we can compile the document:</p>
 <pre><code>quarto render $PWD/template.qmd --to jss-pdf</code></pre>
 <p>This will compile the <code>template.qmd</code> (our finished paper).

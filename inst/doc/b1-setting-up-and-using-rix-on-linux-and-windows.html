@@ -12,7 +12,7 @@
 
 
 
-<title>b1 - Setting up and using rix on Linux and Windows</title>
+<title>b1 - Setting up and using Nix and rix on Linux and Windows</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -336,8 +336,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">b1 - Setting up and using rix on Linux and
-Windows</h1>
+<h1 class="title toc-ignore">b1 - Setting up and using Nix and rix on
+Linux and Windows</h1>
 
 
 
@@ -360,6 +360,13 @@ have Nix installed, which means you can generate Nix expressions, you
 just can’t build them. So if you can’t install Nix on your system, but
 have R already installed, you can skip to the last section of this
 vignette to simply install the <code>{rix}</code> package.</p>
+</div>
+<div id="why-rix-and-nix" class="section level2">
+<h2>Why rix <em>and</em> Nix?</h2>
+<p>You don’t have to install Nix to use <code>{rix}</code>: you can
+generate valid Nix expressions using <code>{rix}</code> even on a system
+where Nix isn’t present. However, this means that you won’t be able to
+build these expressions on that system.</p>
 </div>
 <div id="installing-nix" class="section level2">
 <h2>Installing Nix</h2>
@@ -410,8 +417,26 @@ Determinate Nix Installer page</a>):</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--proto</span> <span class="st">&#39;=https&#39;</span> <span class="at">--tlsv1.2</span> <span class="at">-sSf</span> <span class="dt">\</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">-L</span> https://install.determinate.systems/nix <span class="kw">|</span> <span class="dt">\</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>     <span class="fu">sh</span> <span class="at">-s</span> <span class="at">--</span> install</span></code></pre></div>
-<p>Once you have Nix installed, you can build the expressions you
-generate with <code>{rix}</code>!</p>
+<p>Then, install the <code>cachix</code> client and configure our
+<code>rstats-on-nix</code> cache: this will install binary versions of
+many R packages which will speed up the building process of
+environments:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">nix-env</span> <span class="at">-iA</span> cachix <span class="at">-f</span> https://cachix.org/api/v1/install</span></code></pre></div>
+<p>then use the cache:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">cachix</span> use rstats-on-nix</span></code></pre></div>
+<p>You only need to do this once per machine you want to use
+<code>{rix}</code> on. Many thanks to <a href="https://www.cachix.org/">Cachix</a> for sponsoring the
+<code>rstats-on-nix</code> cache!</p>
+<p><code>{rix}</code> also includes a function called
+<code>setup_cachix()</code> which will configure the cache but it is
+recommended to use the <code>cachix</code> client instead. This is
+because <code>setup_cachix()</code> will not edit the files that require
+admin/root privileges and only edit the user-level files. This may not
+be enough depending on how you installed Nix. Using the
+<code>cachix</code> client takes care of everything. Use
+<code>setup_cachix()</code> when building a Docker image or if you
+somehow mess up the configuration file (which should be located in
+<code>~/.config/nix.conf</code>).</p>
 <p>On Linux, once Nix is installed, all the software that will be
 installed through Nix will be saved to the <code>/nix</code> directory
 on the root partition. It is common for Linux users to have a separate
@@ -433,22 +458,22 @@ as well</h2>
 <p>If you have successfully installed Nix, but don’t have yet R
 installed on your system, you could install R as you would usually do on
 your operating system, and then install the <code>{rix}</code> package,
-and from there, generated project-specific expressions and build them.
+and from there, generate project-specific expressions and build them.
 But you could also install R using Nix. Running the following line in a
 terminal will drop you in an interactive R session that you can use to
 start generating expressions:</p>
 <pre><code>nix-shell --expr &quot;$(curl -sl https://raw.githubusercontent.com/ropensci/rix/master/inst/extdata/default.nix)&quot;</code></pre>
 <p>This should immediately start an R session inside your terminal. You
 can now run something like this:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.4.2&quot;</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>)</span></code></pre></div>
 <p>to generate a <code>default.nix</code>, and then use that file to
 generate an environment with R, <code>{dplyr}</code> and
 <code>{ggplot2}</code>. If you need to add packages for your project,
@@ -465,37 +490,45 @@ and
 <code>vignette(&quot;d2-installing-system-tools-and-texlive-packages-in-a-nix-environment&quot;)</code>.</p>
 <p>You could also include <code>{rix}</code> in your project-specific
 environments, by generating a <code>default.nix</code> like so:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;rix&quot;</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ropensci/rix&quot;</span>,</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;76d1bdd03d78589d399b4b9d473ecde616920a82&quot;</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  ),</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;rix&quot;</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ropensci/rix&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;76d1bdd03d78589d399b4b9d473ecde616920a82&quot;</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  ),</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>)</span></code></pre></div>
 <p>Change the commit to a more recent one and adapt the
 <code>project_path</code> argument if needed.</p>
 </div>
 <div id="case-2-you-have-r-installed-through-your-oss-package-manager" class="section level2">
 <h2>Case 2: you have R installed through your OS’s package manager</h2>
 <p>If you have installed R on your system through the usual means of
-installation (so not Nix, as described before), you can install the
+installation (so not with Nix, as described before), you can install the
 <code>{rix}</code> package as usual as well. To install
 <code>{rix}</code>, run:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>)</span></code></pre></div>
 <p>or use r-universe:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>))</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>))</span></code></pre></div>
 <p>You can then use the <code>{rix}</code> package to generate
 expressions. Consult the next vignette
 <code>vignette(&quot;c-using-rix-to-build-project-specific-environments&quot;)</code>
 to learn more.</p>
+</div>
+<div id="other-nixes" class="section level2">
+<h2>Other “Nix”es</h2>
+<p>There are several implementations of the Nix package manager that you
+might want to try if you’re feeling adventurous… for now, we recommend
+to stick with Nix.</p>
+<p>You can give <a href="https://lix.systems/install/">Lix</a> a try, or
+<a href="https://tvix.dev/">Tvix</a>.</p>
 </div>
 
 

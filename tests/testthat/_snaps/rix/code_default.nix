@@ -1,6 +1,6 @@
 
 let
-  pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/976fa3369d722e76f37c77493d99829540d43845.tar.gz") {};
+  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2023-10-30.tar.gz") {};
  
   rpkgs = builtins.attrValues {
     inherit (pkgs.rPackages) 
@@ -10,8 +10,7 @@ let
       quarto;
   };
  
-  git_archive_pkgs = [
-    (pkgs.rPackages.buildRPackage {
+    fusen = (pkgs.rPackages.buildRPackage {
       name = "fusen";
       src = pkgs.fetchgit {
         url = "https://github.com/ThinkR-open/fusen";
@@ -35,10 +34,10 @@ let
           usethis
           yaml;
       };
-    })
+    });
 
 
-    (pkgs.rPackages.buildRPackage {
+    housing = (pkgs.rPackages.buildRPackage {
       name = "housing";
       src = pkgs.fetchgit {
         url = "https://github.com/rap4all/housing/";
@@ -57,9 +56,9 @@ let
           stringr
           tidyr;
       };
-    })
+    });
  
-    (pkgs.rPackages.buildRPackage {
+    AER = (pkgs.rPackages.buildRPackage {
       name = "AER";
       src = pkgs.fetchzip {
        url = "https://cran.r-project.org/src/contrib/Archive/AER/AER_1.2-8.tar.gz";
@@ -74,8 +73,7 @@ let
           zoo
           Formula;
       };
-    })
-  ];
+    });
  
   tex = (pkgs.texlive.combine {
     inherit (pkgs.texlive) 
@@ -102,6 +100,6 @@ pkgs.mkShell {
    LC_PAPER = "en_US.UTF-8";
    LC_MEASUREMENT = "en_US.UTF-8";
 
-  buildInputs = [ git_archive_pkgs rpkgs tex system_packages   ];
+  buildInputs = [ housing fusen AER rpkgs tex system_packages   ];
   
 }

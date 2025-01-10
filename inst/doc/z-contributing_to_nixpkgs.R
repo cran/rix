@@ -4,6 +4,3 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----include=FALSE------------------------------------------------------------
-library(rix)
-

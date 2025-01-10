@@ -8,8 +8,8 @@ knitr::opts_chunk$set(
 library(rix)
 
 ## ----parsermd-chunk-2, eval = FALSE-------------------------------------------
-#  install.packages("rix", repos = c(
-#    "https://ropensci.r-universe.dev",
-#    "https://cloud.r-project.org"
-#  ))
+# install.packages("rix", repos = c(
+#   "https://ropensci.r-universe.dev",
+#   "https://cloud.r-project.org"
+# ))
 

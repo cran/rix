@@ -1,5 +1,76 @@
 <!-- NEWS.md is maintained by https://cynkra.github.io/fledge, do not edit -->
 
+# rix 0.14.3 (2025-01-08)
+
+- `rix()`: packages hosted on GitHub which have dependencies also hosted on GitHub
+  are correctly handled.
+
+# rix 0.14.2 (2025-01-01)
+
+- `rix()`: it is now possible to generate expressions pointing to the development
+  version of R and Bioconductor by using `rix(r_ver = "r-devel")`
+  and `rix(r_ver = "r-devel-bioc-devel)`.
+
+# rix 0.14.1 (2025-01-01)
+
+- `rix()`: it is now possible to generate expressions pointing to the development
+  version of Bioconductor by using `rix(r_ver = "bioc-devel")`.
+
+# rix 0.14.0 (2024-12-31)
+
+- This is a major release of `{rix}`:
+  * We have forked the Nixpkgs GitHub repository to include more R packages in
+  Nix, and have backported many fixes, which should improve the user experience
+  on Apple Silicon devices.
+  * We also set up a binary cache on Cachix (many thanks to Cachix for
+  sponsoring the cache!) so now packages get pulled from the official binary
+  cache, as well as from the `rstats-on-nix` cache. This greatly decreases build
+  times.
+  * `rix()` now includes a `date` argument, allowing users to build environments
+  as of a date. Around 4 to 6 dates for each year that is supported are
+  provided, starting from 2019. Check out available dates using the
+  `available_dates()` function. Read the *c - Using rix to build project
+  specific environments* vignette for more details. Should you want a specific
+  date that is not available, feel free to open an issue requesting it.
+  * `rix()` now only includes R versions 3.5.3 (released on March 2019) and up.
+  Earlier versions were complicated to get working on macOS and we assume it is
+  unlikely that many people would need earlier versions. Should that be the case
+  however, feel free to open an issue requesting it.
+
+  Many thanks to [mihem](https://github.com/mihem) for helping with testing this
+  major release of `{rix}`!
+
+# rix 0.13.5 (2024-12-03)
+
+- `rix()`: now correctly handles packages with several DESCRIPTION files, such as
+   `{basilisk}`, thanks to [mihem](https://github.com/mihem)
+
+# rix 0.13.4 (2024-11-20)
+
+- `rix()`: now correctly handles packages with no dependencies, thanks to
+   [jrosell](https://github.com/jrosell)
+
+# rix 0.13.3 (2024-11-20)
+
+- `rix()`: Clearer error message when providing an R version that is too recent
+
+# rix 0.13.2 (2024-11-20)
+
+- `renv2nix()`: switch from RemoteType to RemoteHost in `renv.lock` files to
+  detect packages to be added from GitHub or Gitlab
+
+# rix 0.13.1 (2024-11-19)
+
+- `renv2nix()`: added new argument, `override_r_ver`, to manually set R version
+    in generated Nix expression. This deals with situations where an `renv.lock`
+    lists a version of R that is not (yet) included in nixpkgs.
+
+# rix 0.13.0 (2024-11-18)
+
+- `renv2nix()`: converts `renv.lock` file into a `default.nix` expression. For
+  now, only the R version is matched, not package versions.
+  Thanks to [RichardJActon](https://github.com/RichardJActon) for implementing.
+
 # rix 0.12.4 (2024-09-27)
 
 - `rix_init()`, `rix()`: previous attempt at fixing bug was only partially
@@ -130,7 +201,7 @@
 
 ## Chores
 
-- Github Actions: we now use rhub2 for checking the package
+- GitHub Actions: we now use rhub2 for checking the package
 - `rix::rix()` docs: explain `options(rix.sri_hash)`.
 - Source code now follows tidyverse style guide thanks to `{styler}`
 - Readme: added section explain comparing {rix} and Nix to other package
@@ -175,7 +246,7 @@
 
 # rix 0.7.0 (2024-05-21)
 
-- Added the possibility to create "bleeding_edge" and "frozen_edge" environments
+- Added the possibility to create "bleeding-edge" and "frozen-edge" environments
 - Added the possibility to use *radian* as the environment's console (courtesy of [kupac](https://github.com/ropensci/rix/pull/161)) and *RStudio server*
 - Added `ga_cachix()`, a function to create a GA workflow file that builds and pushes an environment to a Cachix cache
 
@@ -196,7 +267,7 @@
 - update with `glibcLocales` patch
 -`with_nix()` needs patch for R <= 4.2.0; `glibcLocalesUtf8` -> `gibcLocales`
 - Implement `with_nix()` to valuate function in R or shell command via `nix-shell` environment
-- Added `tar_nix_ga()`, a function to run targets pipelines on Github Actions using a Nix expression
+- Added `tar_nix_ga()`, a function to run targets pipelines on GitHub Actions using a Nix expression
 
 
 # rix 0.6.0 (2024-02-02)
@@ -307,7 +378,7 @@
   a specific nix-R session. This feature is useful to test dependencies and
   specific setups of software in controlled environments.
 
-- Added `tar_nix_ga()`, a function to run targets pipelines on Github Actions
+- Added `tar_nix_ga()`, a function to run targets pipelines on GitHub Actions
   using a Nix expression.
 
 

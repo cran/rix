@@ -376,6 +376,11 @@ RUN curl --proto &#39;=https&#39; --tlsv1.2 -sSf -L https://install.determinate.
 
 # Adds Nix to the path, as described by the Determinate Systems installer&#39;s documentation
 ENV PATH=&quot;${PATH}:/nix/var/nix/profiles/default/bin&quot;
+ENV user=root
+
+# Set up rstats-on-nix cache
+# No need to use the cachix client inside Docker
+RUN nix-shell --run &quot;Rscript -e &#39;rix::setup_cachix()&#39;&quot;
 
 # This will overwrite the default.nix we downloaded previously with a new
 # expression generated from running `generate_env.R`
@@ -399,14 +404,18 @@ environment is reproducible.</p>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">shell_hook =</span> <span class="st">&quot;R&quot;</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>)</span></code></pre></div>
 <p>Using Nix to handle the setup of the environment, even inside Docker,
 creates a nice separation of concerns. On one hand, you can continue
 using Docker to serve applications, and on the other hand, you can use
 Nix to ensure you don’t have to store images, as you can always rebuild
 the correct environment in a completely reproducible manner.</p>
+<p>You can build the image using <code>docker build -t my_image .</code>
+and then run a container with
+<code>docker run --rm -it --name my_rix_container my_image</code> which
+will drop you in an interactive Nix shell. Of course, you can replace
+the last <code>CMD</code> statement with whatever you need.</p>
 </div>
 <div id="dockerizing-a-shiny-application" class="section level2">
 <h2>Dockerizing a Shiny application</h2>
@@ -437,6 +446,11 @@ RUN curl --proto &#39;=https&#39; --tlsv1.2 -sSf -L https://install.determinate.
   --no-confirm
 
 ENV PATH=&quot;${PATH}:/nix/var/nix/profiles/default/bin&quot;
+ENV user=root
+
+# Set up rstats-on-nix cache
+# No need to use the cachix client inside Docker
+RUN nix-shell --run &quot;Rscript -e &#39;rix::setup_cachix()&#39;&quot;
 
 # This will overwrite the default.nix we downloaded with a new one
 RUN nix-shell --run &quot;Rscript generate_env.R&quot;

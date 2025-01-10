@@ -389,7 +389,7 @@ example, here is how you could use <code>{rix}</code> to generate the
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>path_to_project <span class="ot">&lt;-</span> <span class="st">&quot;~/Documents/kmeans&quot;</span></span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
@@ -465,7 +465,7 @@ use to generate new <code>default.nix</code> files:</p>
 <p>Running the command above will download R and <code>{rix}</code> and
 then start an R session inside your terminal. You can now run something
 like this:</p>
-<pre><code>rix(r_ver = &quot;latest&quot;,
+<pre><code>rix(r_ver = &quot;latest-upstream&quot;,
     r_pkgs = c(&quot;dplyr&quot;, &quot;ggplot2&quot;),
     system_pkgs = NULL,
     git_pkgs = NULL,
@@ -496,7 +496,7 @@ environment, since these are globally defined at the level of your
 system. This means that to work on a project using VS Code, you would
 use a call to <code>rix()</code> like so:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>

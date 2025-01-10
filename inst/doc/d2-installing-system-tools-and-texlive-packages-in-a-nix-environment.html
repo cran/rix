@@ -346,7 +346,7 @@ packages in a Nix environment</h1>
 <p>More than 100’000 pieces of software are available through the Nix
 package manager. Nix’s repository of packages is called
 <code>nixpkgs</code> and it includes the entirety of CRAN and
-Bioconductor. <code>nixpkgs</code> is actually “just” a Github
+Bioconductor. <code>nixpkgs</code> is actually “just” a GitHub
 repository containing thousands upon thousands of Nix expressions. When
 installing a package, these expressions get evaluated, and the package
 in question gets installed. What “installed” means can vary: sometimes
@@ -356,7 +356,7 @@ available.</p>
 <p>For example, <a href="https://github.com/NixOS/nixpkgs/blob/dce218f4f35440622d2056f93ddc335351763bb4/pkgs/development/libraries/quarto/default.nix">here</a>
 is the Nix expression that downloads and installs <a href="https://quarto.org/">Quarto</a>. This is an example of an
 expression that downloads the pre-compiled binary from Quarto’s own
-Github repository, and then installs it. The installation process in
+GitHub repository, and then installs it. The installation process in
 this case is essentially making sure that Quarto is able to find its
 dependencies, which also get installed from Nix, and some R and Python
 packages to make Quarto work well with both languages also get
@@ -375,7 +375,7 @@ installed, as well as the <code>quarto</code> command line tool
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>),</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>, <span class="st">&quot;git&quot;</span>),</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
@@ -400,7 +400,7 @@ add a TexLive package to the <code>tex_pkgs</code> argument of
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest&quot;</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>),</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;quarto&quot;</span>,</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">tex_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;amsmath&quot;</span>),</span>

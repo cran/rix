@@ -15,13 +15,12 @@ testthat::test_that("Testing `with_nix()` if Nix is installed", {
 
   # Suppress the warning related to generating an expression
   # for an old version of R
-  suppressWarnings(
-    rix(
-      r_ver = "3.5.3",
-      overwrite = TRUE,
-      project_path = path_subshell,
-      shell_hook = NULL
-    )
+  rix(
+    r_ver = "3.5.3",
+    overwrite = TRUE,
+    project_path = path_subshell,
+    message_type = "quiet",
+    shell_hook = NULL
   )
 
   out_subshell <- with_nix(
@@ -33,7 +32,7 @@ testthat::test_that("Testing `with_nix()` if Nix is installed", {
     },
     program = "R",
     project_path = path_subshell,
-    message_type = "simple"
+    message_type = "quiet"
   )
 
   # On a recent version of R, set.seed(1234);sample(seq(1,10), 5)
@@ -65,6 +64,7 @@ testthat::test_that("Test `with_nix()` if Nix is installed on R 4.2.0", {
     r_ver = "4.2.0",
     overwrite = TRUE,
     project_path = path_subshell,
+    message_type = "quiet",
     shell_hook = NULL
   )
 
@@ -76,7 +76,7 @@ testthat::test_that("Test `with_nix()` if Nix is installed on R 4.2.0", {
     },
     program = "R",
     project_path = path_subshell,
-    message_type = "verbose"
+    message_type = "quiet"
   )
 
   testthat::expect_false(
@@ -107,6 +107,7 @@ testthat::test_that("Test `with_nix()` correct .libPaths()", {
     r_ver = "4.3.1",
     overwrite = TRUE,
     project_path = path_subshell,
+    message_type = "quiet",
     shell_hook = NULL
   )
 
@@ -116,7 +117,7 @@ testthat::test_that("Test `with_nix()` correct .libPaths()", {
     },
     program = "R",
     project_path = path_subshell,
-    message_type = "verbose"
+    message_type = "quiet"
   )
 
   testthat::expect_true(

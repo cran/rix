@@ -5,7 +5,8 @@
 \title{Generate a Nix expression that builds a reproducible development environment}
 \usage{
 rix(
-  r_ver = "latest",
+  r_ver = NULL,
+  date = NULL,
   r_pkgs = NULL,
   system_pkgs = NULL,
   git_pkgs = NULL,
@@ -20,15 +21,22 @@ rix(
 )
 }
 \arguments{
-\item{r_ver}{Character, defaults to "latest". The required R version, for
+\item{r_ver}{Character. The required R version, for
 example "4.0.0". You can check which R versions are available using
-\code{available_r()}. For reproducibility purposes, you can also provide a
+\code{available_r()}, and for more details check \code{available_df()}.
+For reproducibility purposes, you can also provide a
 \code{nixpkgs} revision directly. For older versions of R, \code{nix-build} might
 fail with an error stating 'this derivation is not meant to be built'. In
 this case, simply drop into the shell with \code{nix-shell} instead of building
-it first. It is also possible to provide either "bleeding_edge" or
-"frozen_edge" if you need an environment with bleeding edge packages. Read
+it first. It is also possible to provide either "bleeding-edge" or
+"frozen-edge" if you need an environment with bleeding edge packages. Read
 more in the "Details" section below.}
+
+\item{date}{Character. Instead of providing \code{r_ver}, it is also possible
+to provide a date. This will build an environment containing R and R
+packages (and other dependencies) as of that date. You can check which
+dates are available with \code{available_dates()}. For more details about versions
+check \code{available_df()}.}
 
 \item{r_pkgs}{Vector of characters. List the required R packages for your
 analysis here.}
@@ -56,7 +64,7 @@ for Visual Studio Code. You can also use "radian", an interactive REPL. For
 other editors, use "other". This has been tested with RStudio, VS Code and
 Emacs. If other editors don't work, please open an issue.}
 
-\item{project_path}{Character. Where to write \code{default.nix}, for example
+\item{project_path}{Character, where to write \code{default.nix}, for example
 "/home/path/to/project". The file will thus be written to the file
 "/home/path/to/project/default.nix". If the folder does not exist, it will
 be created.}
@@ -77,14 +85,28 @@ to the \code{shellHook} variable are executed when the Nix shell starts. So by
 default, using \verb{nix-shell default.nix} will start a specific program,
 possibly with flags (separated by space), and/or do shell actions. You can
 for example use \code{shell_hook = R}, if you want to directly enter the declared
-Nix R session when dropping into the Nix shell. @details This function will
-write a \code{default.nix} and an \code{.Rprofile} in the chosen path. Using the Nix
-package manager, it is then possible to build a reproducible development
-environment using the \code{nix-build} command in the path. This environment will
-contain the chosen version of R and packages, and will not interfere with any
-other installed version (via Nix or not) on your machine. Every dependency,
-including both R package dependencies but also system dependencies like
-compilers will get installed as well in that environment.
+Nix R session when dropping into the Nix shell.}
+}
+\value{
+Nothing, this function only has the side-effect of writing two files:
+\code{default.nix} and \code{.Rprofile} in the working directory. \code{default.nix}
+contains a Nix expression to build a reproducible environment using the Nix
+package manager, and \code{.Rprofile} ensures that a running R session from a
+Nix environment cannot access local libraries, nor install packages using
+\code{install.packages()} (nor remove nor update them).
+}
+\description{
+Generate a Nix expression that builds a reproducible development environment
+}
+\details{
+This function will write a \code{default.nix} and an \code{.Rprofile} in the
+chosen path. Using the Nix package manager, it is then possible to build a
+reproducible development environment using the \code{nix-build} command in the
+path. This environment will contain the chosen version of R and packages,
+and will not interfere with any other installed version (via Nix or not) on
+your machine. Every dependency, including both R package dependencies but
+also system dependencies like compilers will get installed as well in that
+environment.
 
 It is possible to use environments built with Nix interactively, either
 from the terminal, or using an interface such as RStudio. If you want to
@@ -100,7 +122,7 @@ command line, or from another editor (such as Emacs or Vim), set the \code{ide}
 argument to \code{"other"}. We recommend reading the
 \code{vignette("e-interactive-use")} for more details.
 
-Packages to install from Github or Gitlab must be provided in a list of 3
+Packages to install from GitHub or Gitlab must be provided in a list of 3
 elements: "package_name", "repo_url" and "commit". To install several
 packages, provide a list of lists of these 3 elements, one per package to
 install. It is also possible to install old versions of packages by
@@ -113,7 +135,7 @@ have looked at the time of \code{{ggplot2}}'s version 2.2.1 release, then use
 the Nix revision closest to that date, by setting \code{r_ver = "3.1.0"}, which
 was the version of R current at the time. This ensures that Nix builds a
 completely coherent environment. For security purposes, users that wish to
-install packages from Github/Gitlab or from the CRAN archives must provide
+install packages from GitHub/Gitlab or from the CRAN archives must provide
 a security hash for each package. \code{{rix}} automatically precomputes this
 hash for the source directory of R packages from GitHub/Gitlab or from the
 CRAN archives, to make sure the expected trusted sources that match the
@@ -129,7 +151,7 @@ behaviour using \code{options(rix.sri_hash=x)}, where \code{x} is one of "check_
 Note that installing packages from Git or old versions using the \code{"@"}
 notation or local packages, does not leverage Nix's capabilities for
 dependency solving. As such, you might have trouble installing these
-packages. If that is the case, open an issue on \code{{rix}}'s Github
+packages. If that is the case, open an issue on \code{{rix}}'s GitHub
 repository.
 
 By default, the Nix shell will be configured with \code{"en_US.UTF-8"} for the
@@ -140,38 +162,32 @@ there are good reasons to not stick to the default, you can set your
 preferred locale variables via \verb{options(rix.nix_locale_variables = list(LANG = "de_CH.UTF-8", <...>)} and the aforementioned locale variable
 names.
 
-It is possible to use \verb{"bleeding_edge}" or \verb{"frozen_edge}" as the value for
+It is possible to use \verb{"bleeding-edge}" or \verb{"frozen-edge}" as the value for
 the \code{r_ver} argument. This will create an environment with the very latest
-R packages. \verb{"bleeding_edge}" means that every time you will build the
+R packages. \verb{"bleeding-edge}" means that every time you will build the
 environment, the packages will get updated. This is especially useful for
 environments that need to be constantly updated, for example when
-developing a package. In contrast, \verb{"frozen_edge}" will create an
+developing a package. In contrast, \verb{"frozen-edge}" will create an
 environment that will remain stable at build time. So if you create a
-\code{default.nix} file using \verb{"bleeding_edge}", each time you build it using
-\code{nix-build} that environment will be up-to-date. With \verb{"frozen_edge}" that
+\code{default.nix} file using \verb{"bleeding-edge}", each time you build it using
+\code{nix-build} that environment will be up-to-date. With \verb{"frozen-edge}" that
 environment will be up-to-date on the date that the \code{default.nix} will be
 generated, and then each subsequent call to \code{nix-build} will result in the
-same environment. We highly recommend you read the vignette titled
+same environment. \code{"bioc-devel"} is the same as \code{"bleeding-edge"}, but also
+adds the development version of Bioconductor. \code{"r-devel"} is the same as
+bleeding edge, but with the R development version instead of the latest
+stable version and \code{"r-devel-bioc-devel"} is the same as \code{"r-devel"} but
+with Bioconductor on the development version. We highly recommend you read
+the vignette titled
 "z - Advanced topic: Understanding the rPackages set release cycle and
-using bleeding edge packages".}
-}
-\value{
-Nothing, this function only has the side-effect of writing two files:
-\code{default.nix} and \code{.Rprofile} in the working directory. \code{default.nix}
-contains a Nix expression to build a reproducible environment using the Nix
-package manager, and \code{.Rprofile} ensures that a running R session from a
-Nix environment cannot access local libraries, nor install packages using
-\code{install.packages()} (nor remove nor update them).
-}
-\description{
-Generate a Nix expression that builds a reproducible development environment
+using bleeding edge packages".
 }
 \examples{
 \dontrun{
-# Build an environment with the latest version of R
+# Build an environment with the latest version of R available from Nixpkgs
 # and the dplyr and ggplot2 packages
 rix(
-  r_ver = "latest",
+  r_ver = "latest-upstream",
   r_pkgs = c("dplyr", "ggplot2"),
   system_pkgs = NULL,
   git_pkgs = NULL,

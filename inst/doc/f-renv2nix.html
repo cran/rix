@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>f - Converting renv projects to Nix projects</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">f - Converting renv projects to Nix
+projects</h1>
+
+
+
+<p><em>renv2nix() is early development stages and its arguments may
+change in the future</em></p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><code>{renv}</code> is very likely the most popular package for
+reproducibility in R. <code>{renv}</code> generates and manages
+so-called <code>renv.lock</code> files at the level of a project, and
+using these files it is thus possible to have different versions of the
+same packages on the same system, without any interference. However,
+<code>{renv}</code> doesn’t snapshot R itself, so different projects
+with different libraries of packages will end up using the same version
+of R, which could lead to issues, especially if you’re trying to restore
+an old project which relied on an old version of R. Also, in some cases,
+it might be impossible to restore a project due to incompatibilities at
+the level of the system-level dependencies, as these are not managed by
+<code>{renv}</code>. In our experience, the older the project, the less
+likely restoring it using <code>{renv}</code> will succeed.</p>
+<p>As explained extensively in this documentation already, Nix handles
+all the different pieces of the reproducibility puzzle: versions of R
+packages, versions of R, and versions of system-level dependencies are
+all handled by Nix. In other words, it’s possible to have per project
+complete development environments that are completely reproducible.</p>
+<p>While Nix has been around for 20 years, it was never widely adopted
+by R users, who instead have already invested a lot of effort into
+<code>{renv}</code> and Docker. The goal of <code>{rix}</code> is to
+ease adoption of Nix for R users for new projects, but there is also a
+need to convert historical <code>{renv}</code> projects into Nix.</p>
+<p>This is where <code>renv2nix()</code> can help.</p>
+</div>
+<div id="converting-an-historical-renv-project" class="section level2">
+<h2>Converting an historical renv project</h2>
+<p>There are two ways that you can convert an historical project: the
+recommended way is to copy the historical <code>renv.lock</code> file
+into a new, empty folder. Do not copy any of the other generated
+<code>{renv}</code> files nor folders. From there, call
+<code>renv2nix()</code> like so:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">renv2nix</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="at">renv_lock_path =</span> <span class="st">&quot;path/to/rix_project/renv.lock&quot;</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;path/to/rix_project&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will generate a <code>default.nix</code> and
+<code>.Rprofile</code> files for your Nix project.</p>
+<p>The other way to achieve this is to point the
+<code>renv_lock_path</code> argument to the historical
+<code>renv.lock</code> file without copying it to a new folder:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">renv2nix</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">renv_lock_path =</span> <span class="st">&quot;path/to/original/renv_project/renv.lock&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;path/to/rix_project&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>But this is not the recommended approach. Instead keep the original
+<code>renv.lock</code> file and the generated <code>default.nix</code>
+files together (ideally with the call to <code>renv2nix()</code> in an R
+script) and commit everything into version control.</p>
+</div>
+<div id="starting-a-new-project" class="section level2">
+<h2>Starting a new project</h2>
+<p>If you start a new project, you don’t need to use
+<code>renv2nix()</code>, as you could directly use <code>rix()</code> to
+generate a <code>default.nix</code> file. However, you could start with
+generating an <code>renv.lock</code> file using
+<code>renv::snapshot()</code> and then call <code>renv2nix()</code>, to
+generate the appropriate <code>default.nix</code> file. Because
+<code>renv::snapshot()</code> does not call <code>renv::init()</code>
+this will not generate any other files that could interfere with
+<code>{rix}</code>. Doing this could be useful if you have the habit of
+starting writing code and then would like to generate a
+<code>default.nix</code> file later. We don’t recommend working like
+this and instead urge you to start from an environment and work from the
+very beginning from that environment.</p>
+</div>
+<div id="caveats" class="section level2">
+<h2>Caveats</h2>
+<div id="package-versions-are-not-exactly-the-same-between-the-renv.lock-and-default.nix-files" class="section level3">
+<h3>Package versions are not exactly the same between the renv.lock and
+default.nix files</h3>
+<p><code>renv2nix()</code> has two methods, <code>&quot;fast&quot;</code> and
+<code>&quot;accurate&quot;</code>. <code>&quot;fast&quot;</code> simply lists the version of
+R and R packages, and generates a <code>default.nix</code> expression
+without trying to match package versions exactly. We believe that this
+is acceptable for most use cases. The planned <code>&quot;accurate&quot;</code>
+method will instead try to do its best to match exact package versions.
+However, due to how differently Nix and <code>{renv}</code> handle
+snapshotting, it will not be possible to match package versions exactly
+even with the planned <code>&quot;accurate&quot;</code> method. If you absolutely
+need a very specific version of a package, there are other ways to
+achieve this, by providing for example the required version to the
+<code>r_pkgs</code> argument of <code>rix()</code>, like this:
+<code>rix(r_pkgs = &quot;dplyr@0.8.0&quot;)</code>. This however tries to build
+the pacage from source, which can fail. If this is the case, don’t
+hesitate to open an issue. Better handling of individual package
+versions is planned for a future release.</p>
+</div>
+<div id="dont-use-the-same-folder-for-your-nix-and-renv-projects" class="section level3">
+<h3>Don’t use the same folder for your Nix and {renv} projects</h3>
+<p>As stated previously, don’t convert an <code>renv.lock</code> file
+into a <code>default.nix</code> file from a folder that contains the
+<code>renv.lock</code> file and the <code>{renv}</code> generated
+<code>.Rprofile</code> file and <code>renv/</code> folder. Instead, work
+from a new empty folder in which you copy the <code>renv.lock</code>
+file.</p>
+</div>
+<div id="mind-the-r-version" class="section level3">
+<h3>Mind the R version</h3>
+<p>Many R users do not update R very often, so when they generate an
+<code>renv.lock</code> file, the <code>renv.lock</code> will list an old
+version of R, but potentially very recent packages. The way
+<code>{rix}</code> generates <code>default.nix</code> files is by
+looking at the version of R and then install packages that were current
+at that time. So if the <code>renv.lock</code> file lists an old version
+of R, the packages that will be included in the <code>default.nix</code>
+file will also be old. You could even end up in a situation where a
+package is not available because it only recently got released on CRAN.
+To avoid problems, use the <code>override_r_ver</code> argument of
+<code>renv2nix()</code> to provide a more recent version of R, that
+matches roughly when the packages were released.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

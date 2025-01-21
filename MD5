@@ -1,6 +1,6 @@
-7363b77585c2551a96ba170318a480df *DESCRIPTION
+b6527947450b60a6b90b0fe146997674 *DESCRIPTION
 e522c3a2ad6cfa0baff0ee389d476907 *NAMESPACE
-828cc6cefd1b855bc7ad525e90b5cf51 *NEWS.md
+9a1a53fadb7d7d34f64cd3f8828dd128 *NEWS.md
 6d351a462eefe3235a663eff876cbd18 *R/available_r.R
 02a60b31d902d8e0e12fca926811fd33 *R/detect_os.R
 1b54f84c6d258f633d6e8410db9d691b *R/detect_versions.R
@@ -11,7 +11,7 @@ a2f69e608b188810d6a8602248ca8623 *R/make_nixpkgs_url.R
 558156a44fb54f6949bf8d17a8a63a02 *R/nix_build.R
 0fb3ba176a5af51a175ce344a66738fe *R/nix_build_helpers.R
 26c8a011ef1c94ee0abfa7e0b558b927 *R/nix_hash.R
-1c4078c8640721b26a193c666d06cc8e *R/renv_helpers.R
+3017c89d28f6cd81d817275776371fda *R/renv_helpers.R
 d8afd0a3ad19a767bb77ab8995ad57d6 *R/rix.R
 36f85f8115b01b7406fcadc3bdb54615 *R/rix_helpers.R
 96d3688550da4612b26642892c6f9979 *R/rix_init.R
@@ -71,7 +71,7 @@ e0dc81a8d9e23ecdfb8fe7c2e16daa58 *inst/doc/z-bleeding_edge.html
 5e270ae6034b339c2a13d20a5f7d2dec *inst/doc/z-contributing_to_nixpkgs.R
 71d6deeb8681f745a918322bdd2189fa *inst/doc/z-contributing_to_nixpkgs.Rmd
 e1645717794357019e576438f8884bc4 *inst/doc/z-contributing_to_nixpkgs.html
-5474dda42c5568bb88f57a55e2d1d25c *inst/extdata/available_df.csv
+ce759b1157463e09764ed33b2d656e0b *inst/extdata/available_df.csv
 e6e25864877a0b098e05b6aef99a4111 *inst/extdata/cachix_dev_env.yaml
 135f2a4d3eecb6da812634c9042ac804 *inst/extdata/default.nix
 1bccfda82a77d36745ba12860fe21090 *inst/extdata/nix.conf
@@ -123,7 +123,7 @@ b454e9d91d58ab8e7100d3bb1b71b184 *tests/testthat/test-detect_versions.R
 193c90e5c260976a5686f8016b297a74 *tests/testthat/test-get_latest.R
 be1ffabe95a7fe1e932535ed010df7a4 *tests/testthat/test-get_sri_hash_deps.R
 fd3ee0eb1c14ad7258fb3903873a4dd6 *tests/testthat/test-nix_build.R
-7ef1ac0090b706e340a7f6ff405f8b3a *tests/testthat/test-renv_helpers.R
+bf3d23b612d817f1850491f5da33a7d6 *tests/testthat/test-renv_helpers.R
 4d41f913516d11a8c33cd6161a33e94a *tests/testthat/test-rix.R
 f4d97a9cb98d65a25ffd669a2855e099 *tests/testthat/test-rix_init.R
 d5281583206295e05ee83da8077d6993 *tests/testthat/test-setup_cachix.R

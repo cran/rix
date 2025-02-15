@@ -379,7 +379,7 @@ installed, as well as the <code>quarto</code> command line tool
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>),</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>, <span class="st">&quot;git&quot;</span>),</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>)</span></code></pre></div>
@@ -404,7 +404,7 @@ add a TexLive package to the <code>tex_pkgs</code> argument of
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>),</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;quarto&quot;</span>,</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">tex_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;amsmath&quot;</span>),</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">print =</span> <span class="cn">TRUE</span></span>
@@ -415,7 +415,7 @@ add a TexLive package to the <code>tex_pkgs</code> argument of
 <span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; #  &gt; r_pkgs = c(&quot;quarto&quot;),</span></span>
 <span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; #  &gt; system_pkgs = &quot;quarto&quot;,</span></span>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; #  &gt; tex_pkgs = c(&quot;amsmath&quot;),</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; #  &gt; ide = &quot;other&quot;,</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; #  &gt; ide = &quot;none&quot;,</span></span>
 <span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; #  &gt; project_path = path_default_nix,</span></span>
 <span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; #  &gt; overwrite = TRUE,</span></span>
 <span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; #  &gt; print = TRUE)</span></span>
@@ -470,7 +470,7 @@ programming, refer to the vignette
 of your system, and as such, you should be able to use your usual IDE to
 interact with Nix environments. The only exception is RStudio.
 Everything will be explained in greater detail in the vignette
-<code>vignette(&quot;e-interactive-use&quot;)</code>.</p>
+<code>vignette(&quot;e-configuring-ide&quot;)</code>.</p>
 </div>
 
 

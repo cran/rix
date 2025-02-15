@@ -5,27 +5,26 @@
 #'   package manager, and `.Rprofile` ensures that a running R session from a
 #'   Nix environment cannot access local libraries, nor install packages using
 #'   `install.packages()` (nor remove nor update them).
-#' @param r_ver Character. The required R version, for
-#'   example "4.0.0". You can check which R versions are available using
-#'   `available_r()`, and for more details check `available_df()`.
-#'   For reproducibility purposes, you can also provide a
-#'   `nixpkgs` revision directly. For older versions of R, `nix-build` might
-#'   fail with an error stating 'this derivation is not meant to be built'. In
-#'   this case, simply drop into the shell with `nix-shell` instead of building
-#'   it first. It is also possible to provide either "bleeding-edge" or
-#'   "frozen-edge" if you need an environment with bleeding edge packages. Read
-#'   more in the "Details" section below.
-#' @param date Character. Instead of providing `r_ver`, it is also possible
-#'   to provide a date. This will build an environment containing R and R
-#'   packages (and other dependencies) as of that date. You can check which
-#'   dates are available with `available_dates()`. For more details about versions
-#'   check `available_df()`.
+#' @param r_ver Character. The required R version, for example "4.0.0". You can
+#'   check which R versions are available using `available_r()`, and for more
+#'   details check `available_df()`. For reproducibility purposes, you can also
+#'   provide a `nixpkgs` revision directly. For older versions of R, `nix-build`
+#'   might fail with an error stating 'this derivation is not meant to be
+#'   built'. In this case, simply drop into the shell with `nix-shell` instead
+#'   of building it first. It is also possible to provide either "bleeding-edge"
+#'   or "frozen-edge" if you need an environment with bleeding edge packages.
+#'   Read more in the "Details" section below.
+#' @param date Character. Instead of providing `r_ver`, it is also possible to
+#'   provide a date. This will build an environment containing R and R packages
+#'   (and other dependencies) as of that date. You can check which dates are
+#'   available with `available_dates()`. For more details about versions check
+#'   `available_df()`.
 #' @param r_pkgs Vector of characters. List the required R packages for your
 #'   analysis here.
 #' @param system_pkgs Vector of characters. List further software you wish to
 #'   install that are not R packages such as command line applications for
 #'   example. You can look for available software on the NixOS website
-#'   \url{https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=} # nolint
+#'   \url{https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=}
 #' @param git_pkgs List. A list of packages to install from Git. See details for
 #'   more information.
 #' @param local_r_pkgs List. A list of local packages to install. These packages
@@ -34,12 +33,22 @@
 #' @param tex_pkgs Vector of characters. A set of TeX packages to install. Use
 #'   this if you need to compile `.tex` documents, or build PDF documents using
 #'   Quarto. If you don't know which package to add, start by adding "amsmath".
-#'   See the Vignette "Authoring LaTeX documents" for more details.
-#' @param ide Character, defaults to "other". If you wish to use RStudio to work
+#'   See the
+#'   `vignette("d2- installing-system-tools-and-texlive-packages-in-a-nix-environment")`
+#'   for more details.
+#' @param ide Character, defaults to "none". If you wish to use RStudio to work
 #'   interactively use "rstudio" or "rserver" for the server version. Use "code"
-#'   for Visual Studio Code. You can also use "radian", an interactive REPL. For
-#'   other editors, use "other". This has been tested with RStudio, VS Code and
-#'   Emacs. If other editors don't work, please open an issue.
+#'   for Visual Studio Code or "codium" for Codium, or "positron" for Positron.
+#'   You can also use "radian", an interactive REPL. This will install a
+#'   project-specific version of the chosen editor which will be differrent than
+#'   the one already present in your system (if any). For other editors or if
+#'   you want to use an editor already installed on your system (which will
+#'   require some configuration to make it work seamlessly with Nix shells see
+#'   the `vignette("e-configuring-ide")` for configuration examples), use
+#'   "none". Please be aware that VS Code and Positron are not free software. To
+#'   facilitate their installation, `rix()` automatically enables a required
+#'   setting without prompting the user for confirmation. See the "Details"
+#'   section below for more information.
 #' @param project_path Character, where to write `default.nix`, for example
 #'   "/home/path/to/project". The file will thus be written to the file
 #'   "/home/path/to/project/default.nix". If the folder does not exist, it will
@@ -49,15 +58,20 @@
 #' @param print Logical, defaults to FALSE. If TRUE, print `default.nix` to
 #'   console.
 #' @param message_type Character. Message type, defaults to `"simple"`, which
-#'   gives minimal but sufficient feedback. Other values are currently `"quiet`,
-#'   which generates the files without message, and `"verbose"`, displays all
-#'   the messages.
+#'   gives minimal but sufficient feedback. Other values are currently
+#'   `"quiet`, which generates the files without message, and `"verbose"`,
+#'   displays all the messages.
 #' @param shell_hook Character of length 1, defaults to `NULL`. Commands added
-#' to the `shellHook` variable are executed when the Nix shell starts. So by
-#' default, using `nix-shell default.nix` will start a specific program,
-#' possibly with flags (separated by space), and/or do shell actions. You can
-#' for example use `shell_hook = R`, if you want to directly enter the declared
-#' Nix R session when dropping into the Nix shell.
+#'   to the `shellHook` variable are executed when the Nix shell starts. So by
+#'   default, using `nix-shell default.nix` will start a specific program,
+#'   possibly with flags (separated by space), and/or do shell actions. You can
+#'   for example use `shell_hook = R`, if you want to directly enter the
+#'   declared Nix R session when dropping into the Nix shell.
+#' @param skip_post_processing Logical, defaults to FALSE. Should post-processing be
+#'   skipped? By default, if there are GitHub packages, the generated `default.nix`
+#'   is post-processed to eliminate potential duplicate definitions of packages,
+#'   which may happen if these packages have recursive remote dependencies. Set
+#'   to TRUE to skip post processing, which might be useful for debugging.
 #'
 #' @details This function will write a `default.nix` and an `.Rprofile` in the
 #'   chosen path. Using the Nix package manager, it is then possible to build a
@@ -73,14 +87,21 @@
 #'   use RStudio, set the `ide` argument to `"rstudio"`. Please be aware that
 #'   RStudio is not available for macOS through Nix. As such, you may want to
 #'   use another editor on macOS. To use Visual Studio Code (or Codium), set the
-#'   `ide` argument to `"code"`, which will add the `{languageserver}` R package
-#'   to the list of R packages to be installed by Nix in that environment. You
-#'   can use the version of Visual Studio Code or Codium you already use, or
-#'   also install it using Nix (by adding "vscode" or "vscodium" to the list of
-#'   `system_pkgs`). For non-interactive use, or to use the environment from the
-#'   command line, or from another editor (such as Emacs or Vim), set the `ide`
-#'   argument to `"other"`. We recommend reading the
-#'   `vignette("e-interactive-use")` for more details.
+#'   `ide` argument to `"code"` or `"codium"` respectively, which will add the
+#'   `{languageserver}` R package to the list of R packages to be installed by
+#'   Nix in that environment. It is also possible to use Positron by setting the
+#'   `ide` argument to `"positron"`. Setting the `ide` argument to an editor
+#'   will install it from Nix, meaning that each of your projects can have a
+#'   dedicated IDE (or IDE version). `"radian"` and `"rserver"` are also
+#'   options.
+#'
+#'   Instead of using Nix to install an IDE, you can also simply use the one you
+#'   have already installed on your system, with the exception of RStudio which
+#'   must be managed by Nix to "see" Nix environments. Positron must also be
+#'   heavily configured to work with Nix shells, so we recommend installing it
+#'   using Nix. To use an editor that you already have installed on your system,
+#'   set `ide = "none"` and refer to the `vignette("e-configuring-ide")` for
+#'   more details on how to set up your editor to work with Nix shells.
 #'
 #'   Packages to install from GitHub or Gitlab must be provided in a list of 3
 #'   elements: "package_name", "repo_url" and "commit". To install several
@@ -114,6 +135,12 @@
 #'   dependency solving. As such, you might have trouble installing these
 #'   packages. If that is the case, open an issue on `{rix}`'s GitHub
 #'   repository.
+#'
+#'   If GitHub packages have dependencies on GitHub as well, `{rix}` will
+#'   attempt to generate the correct expression, but we highly recommend you
+#'   read the
+#'   `vignette("z-advanced-topic-handling-packages-with-remote-dependencies")`
+#'   Vignette.
 #'
 #'   By default, the Nix shell will be configured with `"en_US.UTF-8"` for the
 #'   relevant locale variables (`LANG`, `LC_ALL`, `LC_TIME`, `LC_MONETARY`,
@@ -159,7 +186,8 @@
 #'   overwrite = TRUE,
 #'   print = TRUE,
 #'   message_type = "simple",
-#'   shell_hook = NULL
+#'   shell_hook = NULL,
+#'   skip_post_processing = FALSE
 #' )
 #' }
 rix <- function(r_ver = NULL,
@@ -169,15 +197,27 @@ rix <- function(r_ver = NULL,
                 git_pkgs = NULL,
                 local_r_pkgs = NULL,
                 tex_pkgs = NULL,
-                ide = c("other", "code", "radian", "rstudio", "rserver"),
+                ide = "none",
                 project_path,
                 overwrite = FALSE,
                 print = FALSE,
                 message_type = "simple",
-                shell_hook = NULL) {
+                shell_hook = NULL,
+                skip_post_processing = FALSE) {
   message_type <- match.arg(message_type,
     choices = c("quiet", "simple", "verbose")
   )
+
+  if (ide == "other") {
+    stop("ide = 'other' has been deprecated in favour of ide = 'none' as of version 0.15.0.")
+  } else if (ide == "code") {
+    warning("The behaviour of the 'ide' argument changed since version 0.15.0; we highly recommend reading this vignette: https://docs.ropensci.org/rix/articles/e-configuring-ide.html if you want to use VS Code.")
+  } else if (!(ide %in% c(
+    "none", "code", "codium", "positron",
+    "radian", "rstudio", "rserver"
+  ))) {
+    stop("'ide' must be one of 'none', 'code', 'codium', 'positron', 'radian', 'rstudio', 'rserver'")
+  }
 
   if (!is.null(date) && !(date %in% available_dates())) {
     # nolint start: line_length_linter
@@ -190,7 +230,7 @@ rix <- function(r_ver = NULL,
   }
 
   if (is.null(date) && r_ver == "latest") {
-    stop("'latest' was deprecated in favour of latest-upstream as of version 0.14.0.")
+    stop("'latest' was deprecated in favour of 'latest-upstream' as of version 0.14.0.")
   }
 
   if (
@@ -205,8 +245,6 @@ before continuing."
     )
   }
 
-  ide <- match.arg(ide, c("other", "code", "radian", "rstudio", "rserver"))
-
   if (
     identical(ide, "rstudio") && is.null(r_pkgs) && is.null(git_pkgs) &&
       is.null(local_r_pkgs)
@@ -215,7 +253,7 @@ before continuing."
       paste0(
         "You chose 'rstudio' as the IDE, but didn't add any R packages",
         " to the environment.\nThis expression will not build successfully. ",
-        "Consider adding R packages, or add 'rstudio' to `system_pkgs`."
+        "Consider adding R packages."
       )
     )
   }
@@ -237,7 +275,7 @@ before continuing."
 available through 'nixpkgs' for macOS, so the expression you
 generated will not build on macOS. If you wish to build this
 expression on macOS, change the 'ide =' argument to either
-'code' or 'other'. Please refer to the macOS-specific vignette
+'code' or 'none'. Please refer to the macOS-specific vignette
 https://docs.ropensci.org/rix/articles/b2-setting-up-and-using-rix-on-macos.html
 for more details."
     )
@@ -324,18 +362,18 @@ for more details."
     ""
   }
 
-  # Generate default.nix file # nolint next: object_name_linter
   default.nix <- paste(
     generate_header(
       nix_repo,
       r_ver,
-      rix_call
+      rix_call,
+      ide
     ),
     generate_rpkgs(cran_pkgs$rPackages, flag_rpkgs),
     generate_git_archived_pkgs(git_pkgs, cran_pkgs$archive_pkgs, flag_git_archive),
     generate_tex_pkgs(tex_pkgs),
     generate_local_r_pkgs(local_r_pkgs, flag_local_r_pkgs),
-    generate_system_pkgs(system_pkgs, r_pkgs),
+    generate_system_pkgs(system_pkgs, r_pkgs, ide),
     generate_wrapped_pkgs(ide, attrib, flag_git_archive, flag_rpkgs, flag_local_r_pkgs),
     generate_shell(
       flag_git_archive, flag_rpkgs, flag_tex_pkgs,
@@ -344,8 +382,15 @@ for more details."
     collapse = "\n"
   )
 
+  # Generate default.nix file # nolint next: object_name_linter
+
+  default.nix <- strsplit(default.nix, split = "\n")[[1]]
+
+  # Remove potential duplicates
+  default.nix <- post_processing(default.nix, flag_git_archive, skip_post_processing)
+
   if (print) {
-    cat(default.nix, sep = "\n")
+    print(default.nix)
   }
 
   if (!file.exists(default.nix_path) || overwrite) {
@@ -355,6 +400,7 @@ for more details."
     con <- file(default.nix_path, open = "wb", encoding = "native.enc")
     on.exit(close(con))
 
+
     writeLines(enc2utf8(default.nix), con = con, useBytes = TRUE)
 
     if (file.exists(.Rprofile_path)) {
@@ -362,7 +408,7 @@ for more details."
         "File generated by `rix::rix_init()",
         readLines(.Rprofile_path)
       ))) {
-        if (message_type != "quiet") {
+        if (message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")) {
           message("\n\n### Successfully generated `default.nix` ###\n\n")
         }
         warning(
@@ -371,7 +417,7 @@ for more details."
           "to ensure correct functioning of your Nix environment. ###\n\n"
         )
       } else {
-        if (message_type != "quiet") {
+        if (message_type != "quiet"  && identical(Sys.getenv("TESTTHAT"), "false")) {
           message(
             sprintf(
               "\n\n### Successfully generated `default.nix` in %s. ",
@@ -392,7 +438,7 @@ for more details."
         )
       )
 
-      if (message_type != "quiet") {
+      if (message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")) {
         message("\n\n### Successfully generated `default.nix` and `.Rprofile` ###\n\n")
       }
     }
@@ -411,4 +457,28 @@ for more details."
   }
 
   on.exit(close(con))
+
+
+}
+
+
+#' @noRd
+post_processing <- function(default.nix, flag_git_archive, skip_post_processing){
+
+  # Remove potential duplicates
+  do_processing <- if (flag_git_archive == "") {
+                     FALSE
+                   } else {
+                     TRUE
+                   }
+
+  # only do post processing if there are git packages
+  # or if skip_post_processing is TRUE
+  if (all(c(do_processing, !skip_post_processing))){
+    out <- remove_duplicate_entries(default.nix)
+  } else {
+    out <-default.nix
+  }
+
+  out
 }

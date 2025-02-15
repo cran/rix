@@ -350,7 +350,7 @@ separate environment at the start of a project. Let’s say that you wish
 to analyse some data set, and need <code>{dplyr}</code> and
 <code>{ggplot2}</code>. Let’s also suppose that you use VS Code as your
 IDE (there will be more discussion on editors in the vignette
-<code>vignette(&quot;e-interactive-use&quot;)</code> but for now, let’s assume
+<code>vignette(&quot;e-configuring-ide&quot;)</code> but for now, let’s assume
 that you use VS Code). With the <code>rix::rix()</code> function, you
 can easily generate the right <code>default.nix</code> file. You need to
 provide the following inputs to <code>rix()</code>:</p>
@@ -374,7 +374,7 @@ vignette
 the vignette
 <code>vignette(&quot;d1-installing-r-packages-in-a-nix-environment&quot;)</code>);</li>
 <li><code>ide</code>: the integrated development editor to use (more on
-this in the vignette <code>vignette(&quot;e-interactive-use&quot;)</code>)</li>
+this in the vignette <code>vignette(&quot;e-configuring-ide&quot;)</code>)</li>
 <li><code>path</code>: the path where to save the
 <code>default.nix</code> file.</li>
 <li><code>overwrite</code>: whether to overwrite the
@@ -448,7 +448,7 @@ application.</p>
 <p>This will activate the environment. If you have VS Code installed you
 can start it from this environment and VS Code will use this specific R
 version library of packages. We will explore this in greater detail in
-the vignette <code>vignette(&quot;e-interactive-use&quot;)</code>.</p>
+the vignette <code>vignette(&quot;e-configuring-ide&quot;)</code>.</p>
 </div>
 <div id="which-r_ver-should-you-choose" class="section level2">
 <h2>Which <code>r_ver</code> should you choose?</h2>
@@ -550,7 +550,7 @@ IDE:</p>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>),</span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;quarto&quot;</span>),</span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
 <span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
 <span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
 <span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>)</span></code></pre></div>

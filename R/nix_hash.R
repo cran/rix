@@ -21,7 +21,6 @@ nix_hash <- function(repo_url, commit) {
   }
 }
 
-
 #' Return the SRI hash of an URL with .tar.gz
 #' @param url String with URL ending with `.tar.gz`
 #' @return list with following elements:
@@ -31,34 +30,23 @@ nix_hash <- function(repo_url, commit) {
 #' @noRd
 hash_url <- function(url) {
   tdir <- tempdir()
-  on.exit(unlink(tdir, recursive = TRUE, force = TRUE), add = TRUE)
+
   tmpdir <- paste0(
     tdir, "_repo_hash_url_",
     paste0(sample(letters, 5), collapse = "")
   )
-  on.exit(unlink(tmpdir, recursive = TRUE, force = TRUE), add = TRUE)
 
   path_to_folder <- tempfile(pattern = "file", tmpdir = tmpdir, fileext = "")
   dir.create(path_to_folder, recursive = TRUE)
-  on.exit(
-    unlink(path_to_folder, recursive = TRUE, force = TRUE),
-    add = TRUE
-  )
 
   path_to_tarfile <- paste0(path_to_folder, "/package_tar_gz")
   path_to_src <- paste0(path_to_folder, "/package_src")
 
   dir.create(path_to_src, recursive = TRUE)
   path_to_src <- normalizePath(path_to_src)
-  on.exit(
-    unlink(path_to_src, recursive = TRUE, force = TRUE),
-    add = TRUE
-  )
+
   dir.create(path_to_tarfile, recursive = TRUE)
-  on.exit(
-    unlink(path_to_tarfile, recursive = TRUE, force = TRUE),
-    add = TRUE
-  )
+
   path_to_tarfile <- normalizePath(path_to_tarfile)
 
   h <- curl::new_handle(failonerror = TRUE, followlocation = TRUE)
@@ -68,7 +56,8 @@ hash_url <- function(url) {
     c(
       "\nIf it's a GitHub repo, check the url and commit.\n",
       "Are these correct? If it's an archived CRAN package, check the name\n",
-      "of the package and the version number."
+      "of the package and the version number.\n",
+      paste0("Failing repo: ", url)
     )
 
   tar_file <- file.path(path_to_tarfile, "package.tar.gz")
@@ -94,7 +83,13 @@ hash_url <- function(url) {
   paths <- list.files(path_to_src, full.names = TRUE, recursive = TRUE)
   desc_path <- grep(file.path(list.files(path_to_src), "DESCRIPTION"), paths, value = TRUE)
 
-  deps <- get_imports(desc_path)
+  if (grepl("github", url)) {
+    repo_url_short <- paste(unlist(strsplit(url, "/"))[4:5], collapse = "/")
+    commit <- gsub(x = basename(url), pattern = ".tar.gz", replacement = "")
+    commit_date <- get_commit_date(repo_url_short, commit)
+  }
+
+  deps <- get_imports(desc_path, commit_date)
 
   return(
     list(
@@ -242,7 +237,8 @@ nix_hash_online <- function(repo_url, commit) {
     c(
       "\nIf it's a GitHub repo, check the url and commit.\n",
       "Are these correct? If it's an archived CRAN package, check the name\n",
-      "of the package and the version number."
+      "of the package and the version number.\n",
+      paste0("Failing repo: ", repo_url)
     )
 
   req <- try_get_request(

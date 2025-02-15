@@ -13,7 +13,7 @@ library(rix)
 #   r_pkgs = c("dplyr", "ggplot2"),
 #   system_pkgs = NULL,
 #   git_pkgs = NULL,
-#   ide = "other",
+#   ide = "none",
 #   project_path = ".",
 #   overwrite = TRUE
 # )
@@ -27,7 +27,7 @@ library(rix)
 #     repo_url = "https://github.com/ropensci/rix",
 #     commit = "76d1bdd03d78589d399b4b9d473ecde616920a82"
 #   ),
-#   ide = "other",
+#   ide = "none",
 #   project_path = ".",
 #   overwrite = TRUE
 # )

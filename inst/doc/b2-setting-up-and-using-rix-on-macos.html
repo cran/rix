@@ -406,13 +406,13 @@ But you could also install R using Nix. Running the following line in a
 terminal will drop you in an interactive R session that you can use to
 start generating expressions:</p>
 <pre><code>nix-shell --expr &quot;$(curl -sl https://raw.githubusercontent.com/ropensci/rix/main/inst/extdata/default.nix)&quot;</code></pre>
-<p>This should immediately start an R session inside your terminal. You
-can now run something like this:</p>
-<pre><code>rix(r_ver = &quot;4.4.2&quot;,
+<p>After downloading some package, an R session will start inside your
+terminal. You can now run something like this:</p>
+<pre><code>rix(date = &quot;2025-02-03&quot;,
     r_pkgs = c(&quot;dplyr&quot;, &quot;ggplot2&quot;),
     system_pkgs = NULL,
     git_pkgs = NULL,
-    ide = &quot;other&quot;,
+    ide = &quot;none&quot;,
     project_path = &quot;.&quot;,
     overwrite = TRUE)</code></pre>
 <p>to generate a <code>default.nix</code>, and then use that file to
@@ -486,11 +486,12 @@ are the options you have:</p>
 distribution (even though you generated the expression on macOS) and
 used on a Linux distribution;</li>
 <li>change the <code>ide =</code> argument to either
-<code>&quot;other&quot;</code> or <code>&quot;code&quot;</code>. Use <code>&quot;code&quot;</code> if
-you want to use VS Code and <code>&quot;other&quot;</code> for any other editor,
-like Vim or Emacs. These other editors don’t need to be installed
-through <code>nixpkgs</code> to use Nix environments, unlike
-RStudio;</li>
+<code>&quot;other&quot;</code> or <code>&quot;code&quot;</code> or <code>&quot;positron&quot;</code>.
+Use <code>&quot;code&quot;</code> if you want to use VS Code and
+<code>&quot;other&quot;</code> for any other editor, like Vim or Emacs. These
+other editors don’t need to be installed through <code>nixpkgs</code> to
+use Nix environments, unlike RStudio. See the
+<code>vignette(&quot;e-configure-ide&quot;)</code> for more details;</li>
 <li>if you’re working on a pipeline with the <code>{targets}</code>
 package, you could run it on GitHub Actions. This means you could work
 on the code on RStudio outside of the Nix environment, as the code will
@@ -499,7 +500,7 @@ only be executed on GitHub Actions runners. See this vignette
 for further details;</li>
 <li>work on your project as usual, using your usual installation of R
 and RStudio, but generate a <code>default.nix</code> at the end with
-<code>ide = &quot;other&quot;</code> with the right version of R for
+<code>ide = &quot;none&quot;</code> with the right version of R for
 reproducibility purposes;</li>
 <li>use <em>subshells</em> to execute only the code you need to run in a
 specific environment. See this vignette

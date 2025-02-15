@@ -5,7 +5,7 @@
 - [Quick start for returning users](#quick-start-for-returning-users)
 - [Getting started for new users](#getting-started-for-new-users)
   - [Docker](#docker)
-- [Why Nix? Comparison with Docker+renv/Conda/Guix](#why-nix-comparison)
+- [Why Nix? Comparison with Docker+renv/Conda/Guix](#how-is-nix-different-from-dockerrenvgroundhogranganaminicondaguix-or-why-nix)
 - [Contributing](#contributing)
 - [Thanks](#thanks)
 - [Recommended reading](#recommended-reading)
@@ -46,8 +46,14 @@ While Nix has a steep learning curve, `{rix}`
     evaluate the same code in different development environments, and
     finally to deploy software environments in production.
 
-If you want to watch a 5-Minute video introduction click
-[here](https://youtu.be/OOu6gjQ310c?si=qQ5lUhAg5U-WT2W1).
+<p>
+If you want to watch a 5-Minute video introduction, click the image
+below:
+</p>
+
+<a href="https://youtu.be/OOu6gjQ310c?si=MRX0afStyQdVHLiV" target="_blank" rel="noopener noreferrer">
+<img src="https://raw.githubusercontent.com/ropensci/rix/refs/heads/main/video_thumbnail.png" alt="Video Thumbnail" style="width:100%; max-width:560px; height:auto; display:block; margin:0 auto;">
+</a>
 
 Nix includes nearly all CRAN and Bioconductor packages, with the ability
 to install specific package versions or GitHub snapshots. Nix also
@@ -58,19 +64,26 @@ which provides improved compatibility for older versions of R and R
 packages, especially for Apple Silicon computers.
 
 If you have R installed, you can start straight away from your R session
-by first installing `{rix}`:
+by first installing `{rix}` from CRAN:
+
+``` r
+install.packages("rix")
+```
+
+or the development version from R-universe (development versions will
+generally have fixes and newer features):
 
 ``` r
 install.packages("rix", repos = c(
-  "https://ropensci.r-universe.dev",
-  "https://cloud.r-project.org"
+  "https://ropensci.r-universe.dev"
 ))
-library("rix")
 ```
 
 Now try to generate an expression using `rix()`:
 
 ``` r
+library("rix")
+
 # Choose the path to your project
 # This will create two files: .Rprofile and default.nix
 path_default_nix <- "."
@@ -271,7 +284,11 @@ nix_build(project_path = ".")
 
 If you don’t have R installed, but have the Nix package manager
 installed, you can run a temporary terminal session which includes R and
-the development version of `{rix}`:
+the released version of `{rix}`:
+
+    nix-shell -p R rPackages.rix
+
+or if you prefer the development version of `{rix}`:
 
     nix-shell --expr "$(curl -sl https://raw.githubusercontent.com/ropensci/rix/main/inst/extdata/default.nix)"
 
@@ -387,9 +404,9 @@ for creating `{rix}`’s logo!
 - [NixOS’s website](https://nixos.org/)
 - [Nixpkgs’s GitHub repository](https://github.com/NixOS/nixpkgs)
 - [Nix for R series from Bruno’s
-  blog](https://www.brodrigues.co/tags/nix/). Or, in case you like video
-  tutorials, watch [this one on Reproducible R development environments
-  with Nix](https://www.youtube.com/watch?v=c1LhgeTTxaI)
+  blog](https://brodrigues.co/index.html#category=nix). Or, in case you
+  like video tutorials, watch [this one on Reproducible R development
+  environments with Nix](https://www.youtube.com/watch?v=c1LhgeTTxaI)
 - [nix.dev
   tutorials](https://nix.dev/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs#pinning-nixpkgs)
 - [INRIA’s Nix
@@ -405,3 +422,4 @@ for creating `{rix}`’s logo!
   Nix](https://rgoswami.me/posts/rethinking-r-nix/)
 - [Blog post: Searching and installing old versions of Nix
   packages](https://lazamar.github.io/download-specific-package-version-with-nix/)
+

@@ -15,7 +15,7 @@ library(rix)
 #   r_pkgs = c("quarto"),
 #   system_pkgs = c("quarto", "git"),
 #   git_pkgs = NULL,
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE
 # )
@@ -28,7 +28,7 @@ library(rix)
 #> #  > system_pkgs = c("quarto",
 #> #  > "git"),
 #> #  > git_pkgs = NULL,
-#> #  > ide = "other",
+#> #  > ide = "none",
 #> #  > project_path = path_default_nix,
 #> #  > overwrite = TRUE)
 #> # It uses nixpkgs' revision 12a9c0004bc987afb1ff511ebb97b67497a68e22 for reproducibility purposes
@@ -74,7 +74,7 @@ library(rix)
 #   r_pkgs = c("quarto"),
 #   system_pkgs = "quarto",
 #   tex_pkgs = c("amsmath"),
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE,
 #   print = TRUE
@@ -85,7 +85,7 @@ library(rix)
 # #> #  > r_pkgs = c("quarto"),
 # #> #  > system_pkgs = "quarto",
 # #> #  > tex_pkgs = c("amsmath"),
-# #> #  > ide = "other",
+# #> #  > ide = "none",
 # #> #  > project_path = path_default_nix,
 # #> #  > overwrite = TRUE,
 # #> #  > print = TRUE)

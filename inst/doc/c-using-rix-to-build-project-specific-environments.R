@@ -60,7 +60,7 @@ library(rix)
 #   r_pkgs = c("dplyr", "janitor"),
 #   system_pkgs = c("quarto"),
 #   git_pkgs = NULL,
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE
 # )

@@ -11,20 +11,20 @@ library(rix)
 # rix(
 #   r_ver = "latest-upstream",
 #   r_pkgs = c("dplyr", "chronicler"),
-#   ide = "other"
+#   ide = "none"
 # )
 
 ## ----eval = FALSE-------------------------------------------------------------
 # rix(
 #   r_ver = "4.4.1",
 #   r_pkgs = c("dplyr", "chronicler"),
-#   ide = "other"
+#   ide = "none"
 # )
 
 ## ----eval = FALSE-------------------------------------------------------------
 # rix(
 #   date = "2024-12-14",
 #   r_pkgs = c("dplyr", "chronicler"),
-#   ide = "other"
+#   ide = "none"
 # )
 

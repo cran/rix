@@ -1,5 +1,47 @@
 <!-- NEWS.md is maintained by https://cynkra.github.io/fledge, do not edit -->
 
+# rix 0.15.2 (2025-02-15)
+
+- `rix()`: duplicate entries were not correctly being removed, this is now fixed.
+
+# rix 0.15.1 (2025-02-14)
+
+- `rix()`: a new internal post-processing function is introduced to remove remaining
+  duplicate entries when generating an expression with recursive remote dependencies
+  (See https://github.com/ropensci/rix/pull/419)
+  Remote dependencies that point to a branch or pull request are now correctly
+  ignored (see https://github.com/ropensci/rix/pull/420)
+
+# rix 0.15.0 (2025-02-11)
+
+- `rix()`: IDEs are now handled more consistently: if the user sets `ide = ` to one
+  of the available options, that IDE gets also installed by Nix. If instead users
+  wish to use an IDE they have installed on their machine already, they have to set
+  `ide =` to `"none"`. The `"other"` option has been deprecated. (see
+  https://github.com/ropensci/rix/pull/411)
+
+
+# rix 0.14.7 (2025-02-05)
+
+- `rix()`: remote dependencies of remote packages are now better handled,
+  `rix()` attempts to use a commit hash instead of `HEAD` (see
+  https://github.com/ropensci/rix/pull/389)
+- `rix()`: dependencies now also get pulled from `NAMESPACE` files
+  for remote packages that don't correctly list them all in `DESCRIPTION` (see
+  https://github.com/ropensci/rix/pull/398)
+- `rix_init()`: better handling of VS Code as an editor (see
+  https://github.com/ropensci/rix/pull/399)
+
+# rix 0.14.6 (2025-01-21)
+
+- `rix()`: fixed a bug where local packages were not being handled correctly
+
+# rix 0.14.5 (2025-01-21)
+
+- `rix()`: remote of remote dependencies could sometimes be defined twice in
+  generated `default.nix`. This is now solved (see
+  https://github.com/ropensci/rix/pull/388)
+
 # rix 0.14.4 (2025-01-21)
 
 - `renv2nix()`: it is now possible to override a date instead of an R version.

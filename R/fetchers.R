@@ -28,11 +28,19 @@ fetchgit <- function(git_pkg) {
     remotes
   )
 
-  if (is.list(remotes) & length(remotes) == 0) {
+  if (is.list(remotes) && length(remotes) == 0) {
     # if no remote dependencies
 
     output <- main_package_expression
   } else { # if there are remote dependencies, start over
+    # don't include remote dependencies twice
+    # this can happen if a remote dependency of a remote dependency
+    # is already present as a remote dependency
+    remotes_remotes <- unique(unlist(lapply(remotes, get_remote)))
+    remotes <- remotes[!sapply(remotes, function(pkg) {
+      pkg$package_name %in% remotes_remotes
+    })]
+
     remote_packages_expressions <- fetchgits(remotes)
 
     output <- paste0(remote_packages_expressions,
@@ -61,7 +69,7 @@ generate_git_nix_expression <- function(package_name,
                                         imports,
                                         remotes = NULL) {
   # If there are remote dependencies, pass this string
-  flag_remote_deps <- if (is.list(remotes) & length(remotes) == 0) {
+  flag_remote_deps <- if (is.list(remotes) && length(remotes) == 0) {
     ""
   } else {
     # Extract package names
@@ -166,21 +174,17 @@ remove_base <- function(list_imports) {
 
 #' Finds dependencies of a package from the DESCRIPTION file
 #' @param path path to package
+#' @param commit_date date of commit
 #' @importFrom utils untar
 #' @return Atomic vector of packages
 #' @noRd
-get_imports <- function(path) {
+get_imports <- function(path, commit_date) {
   tmpdir <- tempdir()
-  on.exit(unlink(tmpdir, recursive = TRUE, force = TRUE), add = TRUE)
 
   tmp_dir <- tempfile(pattern = "file", tmpdir = tmpdir, fileext = "")
   if (!dir.exists(tmp_dir)) {
     dir.create(tmp_dir, recursive = TRUE)
   }
-  on.exit(
-    unlink(tmp_dir, recursive = TRUE, force = TRUE),
-    add = TRUE
-  )
 
   # Some packages have a Description file in the testthat folder
   # (see jimhester/lookup) so we need to get rid of that
@@ -210,31 +214,36 @@ get_imports <- function(path) {
 
   if (!identical(existing_remotes, character(0))) {
     remotes <- imports_df[, existing_remotes, drop = FALSE]
-    # remotes are of the form username/packagename so we need
-    # to only keep packagename
+    # remotes are of the form username/packagename
     remotes <- gsub("\n", "", x = unlist(strsplit(remotes$Remotes, ",")))
-    # Get user names
-    remote_pkgs_usernames <- strsplit(remotes, "/") |>
-      sapply(function(x) x[[1]])
-
-    # Now remove user name and
-    # split at "@" or "#" character to get name and commit or PR separated
-    remote_pkgs_names_and_refs <- sub(".*?/", "", remotes)
-    remote_pkgs_names_and_refs <- strsplit(remote_pkgs_names_and_refs, "(@|#)")
-
-    remote_pkgs_names <- remote_pkgs_names_and_refs |>
-      sapply(function(x) x[[1]])
-
-    # Check if we have a list of lists of two elements: a package name
-    # and a ref. If not, add "HEAD" to it.
-    remote_pkgs_refs <- lapply(remote_pkgs_names_and_refs, function(sublist) {
-      if (length(sublist) == 1) {
-        c(sublist, "HEAD")
-      } else {
-        sublist
+    # Remove PR if present because this is difficult to handle
+    remotes <- sub("#.*$", "", remotes)
+    # Only keep @ part if it is a commit sha
+    remotes <- unname(sapply(remotes, function(x) {
+      parts <- strsplit(x, "@")[[1]]
+      if (length(parts) == 1) {
+        return(parts[1])
       }
-    }) |>
-      sapply(function(x) x[[2]])
+      ref <- parts[2]
+      # Keep only if it looks like a SHA (7-40 hex chars)
+      if (grepl("^[0-9a-f]{7,40}$", ref)) {
+        return(x)
+      }
+      return(parts[1])
+    }))
+    # Get user names
+    remote_pkgs_usernames <- sapply(strsplit(remotes, "/"), function(x) x[[1]])
+    # Remove user names
+    remote_pkgs_names_and_refs <- sub(".*?/", "", remotes)
+    # Get tag or commit using "@" character
+    remote_pkgs_names_and_refs <- strsplit(remote_pkgs_names_and_refs, "@")
+    # Get package names
+    remote_pkgs_names <- sapply(remote_pkgs_names_and_refs, function(x) x[[1]])
+
+    # try to get commit hash for each package if not already provided
+    remote_pkgs_refs <- lapply(remote_pkgs_names_and_refs, function(x) {
+      resolve_package_commit(x, commit_date, remotes)
+    })
 
     urls <- paste0(
       "https://github.com/",
@@ -266,6 +275,22 @@ get_imports <- function(path) {
   # Remove minimum package version for example 'packagename ( > 1.0.0)'
   output <- trimws(gsub("\\(.*?\\)", "", output))
 
+  # Get imports from NAMESPACE
+  namespace_path <- gsub("DESCRIPTION", "NAMESPACE", desc_path)
+  namespace_raw <- readLines(namespace_path)
+  namespace_imports <- namespace_raw[grepl("importFrom", namespace_raw)]
+
+  if (length(namespace_imports) > 0) {
+    # Get package names from `importFrom` statements
+    namespace_imports_pkgs <- gsub("importFrom\\(([^,]+).*", "\\1", namespace_imports)
+    # Remove quotes, which is sometimes necessary
+    # example: https://github.com/cran/AER/blob/master/NAMESPACE
+    namespace_imports_pkgs <- gsub("[\"']", "", namespace_imports_pkgs)
+    namespace_imports_pkgs <- unique(namespace_imports_pkgs)
+    # combine imports from DESCRIPTION and NAMESPACE
+    output <- union(output, namespace_imports_pkgs)
+  }
+
   output <- remove_base(unique(output))
 
   output <- gsub("\\.", "_", output)
@@ -290,9 +315,7 @@ get_imports <- function(path) {
 #' @return A character. The Nix definition to build the R package from local sources.
 #' @noRd
 fetchlocal <- function(local_pkg) {
-  its_imports <- get_imports(local_pkg) |>
-    strsplit(split = " ") |>
-    unlist()
+  its_imports <- get_imports(local_pkg)$imports
 
   its_imports <- paste(c("", its_imports), collapse = "\n          ")
 
@@ -431,3 +454,285 @@ get_remote <- function(git_pkg) {
   remote_package_names <- sapply(remotes, `[[`, "package_name")
   return(remote_package_names)
 }
+
+#' get_commit_date Retrieves the date of a commit from a Git repository
+#' @param repo The GitHub repository (e.g. "r-lib/usethis")
+#' @param  commit_sha The commit hash of interest
+#' @return A character. The date of the commit.
+#' @importFrom curl new_handle handle_setheaders curl_fetch_memory
+#' @importFrom jsonlite fromJSON
+#' @noRd
+get_commit_date <- function(repo, commit_sha) {
+  url <- paste0("https://api.github.com/repos/", repo, "/commits/", commit_sha)
+  h <- new_handle()
+
+  token <- Sys.getenv("GITHUB_PAT")
+  token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
+
+  if (grepl(token_pattern, token)) {
+    handle_setheaders(h, Authorization = paste("token", token))
+  } else {
+    message(
+      paste0(
+        "When fetching the commit date from GitHub from <<< ",
+        repo,
+        " >>>, no GitHub Personal Access Token found.\nPlease set GITHUB_PAT in your environment.\nFalling back to unauthenticated API request.\n"
+      )
+    )
+  }
+
+  tryCatch(
+    {
+      response <- curl_fetch_memory(url, handle = h)
+      if (response$status_code != 200) {
+        stop("API request failed with status code: ", response$status_code)
+      }
+      commit_data <- fromJSON(rawToChar(response$content))
+      if (is.null(commit_data$commit$committer$date)) {
+        stop("Invalid response format: missing commit date")
+      }
+      commit_data$commit$committer$date
+    },
+    error = function(e) {
+      message(
+        paste0(
+          "Failed to get commit date from <<< ",
+          repo,
+          " >>> : ",
+          e$message,
+          ".\nFalling back to <<< ",
+          Sys.Date(),
+          " >>>.\n"
+        )
+      )
+      return(Sys.Date())
+    }
+  )
+}
+
+#' download_all_commits Downloads commits (maximum 1000) from a GitHub repository
+#' @param repo The GitHub repository (e.g. "r-lib/usethis")
+#' @param date The target date to find the closest commit
+#' @return A data frame with commit SHAs and dates
+#' @importFrom curl handle_setheaders curl_fetch_memory
+#' @importFrom jsonlite fromJSON
+#' @noRd
+download_all_commits <- function(repo, date) {
+  base_url <- paste0("https://api.github.com/repos/", repo, "/commits")
+  h <- new_handle()
+
+  token <- Sys.getenv("GITHUB_PAT")
+  token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
+
+  if (grepl(token_pattern, token)) {
+    handle_setheaders(h, Authorization = paste("token", token))
+  } else {
+    message(
+      paste0(
+        "When downloading commits from <<< ",
+        repo,
+        " >>>, no GitHub Personal Access Token found.\nPlease set GITHUB_PAT in your environment.\nFalling back to unauthenticated API request.\n"
+      )
+    )
+  }
+  # Limit to 10 pages of 100 commits each, so 1000 commits in total
+  per_page <- 100
+  max_pages <- 10
+  max_commits <- per_page * max_pages
+
+  # Pre-allocate results data frame
+  all_commits <- data.frame(
+    sha = character(max_commits),
+    date = as.POSIXct(rep(NA, max_commits))
+  )
+  commit_count <- 0
+
+  for (page in 1:max_pages) {
+    url <- paste0(base_url, "?per_page=", per_page, "&page=", page)
+
+    tryCatch(
+      {
+        response <- curl_fetch_memory(url, handle = h)
+        if (response$status_code != 200) {
+          stop("API request failed with status code: ", response$status_code)
+        }
+
+        commits <- fromJSON(rawToChar(response$content))
+        if (!is.list(commits) || length(commits) == 0) break
+
+        # if no commits are found, break the loop
+        n_commits <- length(commits$sha)
+        if (n_commits == 0) break
+
+
+        idx <- (commit_count + 1):(commit_count + n_commits)
+        all_commits$sha[idx] <- commits$sha
+        all_commits$date[idx] <- as.POSIXct(
+          commits$commit$committer$date,
+          format = "%Y-%m-%dT%H:%M:%OSZ"
+        )
+
+        commit_count <- commit_count + n_commits
+
+        # if the date of the last commit is before the target date, break the loop
+        if (min(all_commits$date, na.rm = TRUE) < date) break
+      },
+      error = function(e) {
+        stop("Failed to download commit data: ", e$message)
+      }
+    )
+  }
+
+  # Return only the rows with actual data
+  all_commits[1:commit_count, ]
+}
+
+#' get_closest_commit Finds the closest commit to a specific date
+#' @param commits_df A data frame with commit SHAs and dates
+#' @param target_date The target date to find the closest commit
+#' @return A data frame with the closest commit SHA and date
+#' @noRd
+get_closest_commit <- function(commits_df, target_date) {
+  # Convert target_date to POSIXct format
+  target_date <- as.POSIXct(target_date, format = "%Y-%m-%dT%H:%M:%OSZ")
+
+  # Filter commits before or on the target date
+  filtered_commits <- commits_df[commits_df$date <= target_date, ]
+
+  # If no commits found, raise an error
+  if (nrow(filtered_commits) == 0) {
+    stop("No commits found before or on the target date.")
+  }
+
+  # Find the closest commit by selecting the maximum date
+  closest_commit <- filtered_commits[which.max(filtered_commits$date), ]
+  return(closest_commit)
+}
+
+#' resolve_package_commit Resolves the commit SHA for a package based on a date
+#' @param remote_pkg_name_and_ref A list containing the package name and optionally a ref
+#' @param date The target date to find the closest commit
+#' @param remotess A character vector of remotes
+#' @return A character. The commit SHA of the closest commit to the target date or "HEAD" if API fails
+#' @noRd
+resolve_package_commit <- function(remote_pkg_name_and_ref, date, remotes) {
+  # Check if remote is a list with a package name and a ref
+  if (length(remote_pkg_name_and_ref) == 2) {
+    # Keep existing ref if present
+    return(remote_pkg_name_and_ref[[2]])
+  } else if (length(remote_pkg_name_and_ref) == 1) {
+    # For packages without ref, try to find closest one by date
+    # fallback to HEAD if API fails
+    result <- tryCatch(
+      {
+        remotes_fetch <- remotes[grepl(remote_pkg_name_and_ref, remotes)]
+        all_commits <- download_all_commits(remotes_fetch, date)
+        closest_commit <- get_closest_commit(all_commits, date)
+        closest_commit$sha
+      },
+      error = function(e) {
+        message(
+          paste0(
+            "Failed to get closest commit for ",
+            remotes_fetch,
+            ": ",
+            e$message,
+            ".\nFalling back to <<< HEAD >>>\n"
+          )
+        )
+        return("HEAD")
+      }
+    )
+    return(result)
+  } else {
+    stop("remote_pkg_name_and_ref must be a list of length 1 or 2")
+  }
+}
+
+
+#' remove_duplicate_entries Internal function post-processes `default.nix`
+#' files. When remote packages have remote dependencies, it can happen
+#' that there are duplicated entries in the generated `default.nix` files.
+#' This function removes duplicated blocks.
+#' @param default.nix Character, default.nix lines.
+#' @noRd
+remove_duplicate_entries <- function(default.nix) {
+
+    # nolint start: object_name_linter
+    #default.nix_path <- file.path(default.nix_path)
+    # nolint end
+
+    lines <- default.nix
+
+    # To store output lines
+    out_lines <- character(0)
+
+    # A vector to track which package blocks have been seen
+    seen <- character(0)
+
+    # A vector to track package names for which duplicates were removed
+    removed <- character(0)
+
+    # Variables to accumulate a multi-line block
+    in_block <- FALSE
+    block_lines <- character(0)
+    block_name <- NULL
+
+    # Process each line in order
+    for (line in lines) {
+      if (!in_block) {
+        # Look for the start of a package block:
+        # A package block is assumed to start with a line like:
+        #    <name> = (<rest>
+        if (grepl("^\\s*([a-zA-Z0-9_]+)\\s*=\\s*\\(", line)) {
+          # Extract the package name from the start of the line.
+          block_name <- sub("^\\s*([a-zA-Z0-9_]+)\\s*=.*", "\\1", line)
+          in_block <- TRUE
+          block_lines <- line
+        } else {
+          # Not a block start, simply add the line to output.
+          out_lines <- c(out_lines, line)
+        }
+      } else {
+        # We are inside a block; accumulate the line.
+        block_lines <- c(block_lines, line)
+
+        # Check if the current line marks the end of the block.
+        # Here we assume a block ends with a line that has a
+        # closing parenthesis and semicolon.
+        if (grepl("\\)\\s*;\\s*$", line)) {
+          # If this package has not been seen yet, add the block to the output.
+          if (!(block_name %in% seen)) {
+            out_lines <- c(out_lines, block_lines)
+            seen <- c(seen, block_name)
+          } else {
+            if (identical(Sys.getenv("TESTTHAT"), "false")) {
+              message(sprintf("Duplicate block for '%s' already removed, skipping.",
+                              block_name))
+              removed <- c(removed, block_name)
+            }
+          }
+          # Reset block tracking variables
+          in_block <- FALSE
+          block_lines <- character(0)
+          block_name <- NULL
+        }
+      }
+    }
+
+  # Hide messages when testing
+  if (identical(Sys.getenv("TESTTHAT"), "false")) {
+      # At the end, print a message listing all removed packages (unique names)
+      removed_unique <- unique(removed)
+      if (length(removed_unique) > 0) {
+        message("Removed duplicate blocks for the following packages: ",
+                paste(removed_unique, collapse = ", "))
+      } else {
+        message("No duplicate package blocks were found.")
+      }
+    }
+
+    out_lines
+
+}
+

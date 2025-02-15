@@ -15,7 +15,7 @@ library(rix)
 #   r_pkgs = c("dplyr@0.8.0", "janitor@1.0.0"),
 #   system_pkgs = NULL,
 #   git_pkgs = NULL,
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE
 # )
@@ -38,7 +38,7 @@ library(rix)
 #       commit = "d617172447d2947efb20ad6a4463742b8a5d79dc"
 #     )
 #   ),
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE
 # )
@@ -55,7 +55,7 @@ library(rix)
 #> #  > list(package_name = "fusen",
 #> #  > repo_url = "https://github.com/ThinkR-open/fusen",
 #> #  > commit = "d617172447d2947efb20ad6a4463742b8a5d79dc")),
-#> #  > ide = "other",
+#> #  > ide = "none",
 #> #  > project_path = path_default_nix,
 #> #  > overwrite = TRUE)
 #> # It uses nixpkgs' revision 79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a for reproducibility purposes
@@ -167,7 +167,7 @@ library(rix)
 #       commit = "d617172447d2947efb20ad6a4463742b8a5d79dc"
 #     )
 #   ),
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE
 # )

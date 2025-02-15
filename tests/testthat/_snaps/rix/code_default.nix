@@ -1,6 +1,6 @@
 
 let
-  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2023-10-30.tar.gz") {};
+  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2023-10-30.tar.gz") { config.allowUnfree = true; };
  
   rpkgs = builtins.attrValues {
     inherit (pkgs.rPackages) 
@@ -86,6 +86,7 @@ let
       R
       glibcLocales
       nix
+      vscode-fhs
       quarto;
   };
   

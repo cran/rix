@@ -54,7 +54,7 @@ testthat::test_that("rix(), ide is 'rstudio', Linux", {
 })
 
 
-testthat::test_that("rix(), ide is 'other' or 'code'", {
+testthat::test_that("rix(), ide is 'none' or 'code'", {
   os_type <- Sys.info()["sysname"]
   skip_if(os_type == "Windows")
 
@@ -111,7 +111,7 @@ testthat::test_that("rix(), ide is 'other' or 'code'", {
 
   testthat::expect_snapshot_file(
     path = save_default_nix_test(
-      ide = "other",
+      ide = "none",
       path_default_nix
     ),
     name = "other_default.nix"
@@ -125,6 +125,26 @@ testthat::test_that("rix(), ide is 'other' or 'code'", {
       path_default_nix
     ),
     name = "code_default.nix"
+  )
+
+  testthat::announce_snapshot_file("rix/codium_default.nix")
+
+  testthat::expect_snapshot_file(
+    path = save_default_nix_test(
+      ide = "codium",
+      path_default_nix
+    ),
+    name = "codium_default.nix"
+  )
+
+  testthat::announce_snapshot_file("rix/positron_default.nix")
+
+  testthat::expect_snapshot_file(
+    path = save_default_nix_test(
+      ide = "positron",
+      path_default_nix
+    ),
+    name = "positron_default.nix"
   )
 
   on.exit(
@@ -166,7 +186,7 @@ testthat::test_that("Quarto gets added to sys packages", {
   testthat::expect_snapshot_file(
     path = save_default_nix_test(
       pkgs = "dplyr",
-      interface = "other",
+      interface = "none",
       path_default_nix
     ),
     name = "no_quarto_default.nix",
@@ -177,7 +197,7 @@ testthat::test_that("Quarto gets added to sys packages", {
   testthat::expect_snapshot_file(
     path = save_default_nix_test(
       pkgs = c("dplyr", "quarto", "data.table"),
-      interface = "other",
+      interface = "none",
       path_default_nix
     ),
     name = "yes_quarto_default.nix"
@@ -296,7 +316,7 @@ testthat::test_that("rix(), date working", {
   testthat::announce_snapshot_file("rix/date_default.nix")
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "date_default.nix",
   )
 })
@@ -355,7 +375,7 @@ testthat::test_that("rix(), bleeding-edge", {
   testthat::announce_snapshot_file("rix/bleeding-edge_default.nix")
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "bleeding-edge_default.nix",
   )
 })
@@ -421,7 +441,7 @@ testthat::test_that("rix(), frozen-edge", {
   )
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "frozen-edge_default.nix",
   )
 
@@ -468,7 +488,7 @@ testthat::test_that("rix(), only one GitHub package", {
         repo_url = "https://github.com/rap4all/housing/",
         commit = "1c860959310b80e67c41f7bbdc3e84cef00df18e"
       ),
-      ide = "other",
+      ide = "none",
       project_path = path_default_nix,
       message_type = "quiet",
       overwrite = TRUE
@@ -503,13 +523,19 @@ testthat::test_that("rix(), conclusion message", {
   )
 
   save_default_nix_test <- function(path_default_nix) {
-    rix(
-      r_ver = "4.3.1",
-      ide = "other",
-      project_path = path_default_nix,
-      message_type = "simple",
-      overwrite = TRUE
-    )
+    local({
+      # need to do this because messages are silenced
+      # if testing
+      Sys.setenv("TESTTHAT" = "false")
+
+      rix(
+        r_ver = "4.3.1",
+        ide = "none",
+        project_path = path_default_nix,
+        message_type = "simple",
+        overwrite = TRUE
+      )
+    })
 
     file.path(path_default_nix, "default.nix")
   }
@@ -558,7 +584,7 @@ testthat::test_that("rix(), warning message if rix_init() already called", {
   save_default_nix_test <- function(path_default_nix) {
     rix(
       r_ver = "4.3.1",
-      ide = "other",
+      ide = "none",
       project_path = path_default_nix,
       message_type = "simple",
       overwrite = TRUE
@@ -614,7 +640,7 @@ testthat::test_that("rix(), bioc-devel", {
   testthat::announce_snapshot_file("rix/bioc-devel_default.nix")
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "bioc-devel_default.nix",
   )
 })
@@ -659,7 +685,7 @@ testthat::test_that("rix(), r-devel", {
   testthat::announce_snapshot_file("rix/r-devel_default.nix")
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "r-devel_default.nix",
   )
 })
@@ -704,7 +730,64 @@ testthat::test_that("rix(), r-devel-bioc-devel", {
   testthat::announce_snapshot_file("rix/r-devel-bioc-devel_default.nix")
 
   testthat::expect_snapshot_file(
-    path = save_default_nix_test(ide = "other", path_default_nix),
+    path = save_default_nix_test(ide = "none", path_default_nix),
     name = "r-devel-bioc-devel_default.nix",
+  )
+})
+
+
+testthat::test_that("remove_duplicate_entries(), correctly remove duplicates", {
+
+  dups_entries_default.nix <- paste0(testthat::test_path(),
+    "/testdata/default-nix_samples/dups-entries_default.nix")
+  tmpdir <- tempdir()
+  destination_file <- file.path(tempdir(), basename(dups_entries_default.nix))
+  file.copy(dups_entries_default.nix, destination_file, overwrite = TRUE)
+
+  on.exit(
+    unlink(tmpdir, recursive = TRUE, force = TRUE),
+    add = TRUE
+  )
+
+  removed_dups <- function(destination_file) {
+
+    out <- remove_duplicate_entries(readLines(destination_file))
+
+    writeLines(out, destination_file)
+
+    file.path(destination_file)
+  }
+
+  testthat::expect_snapshot_file(
+    path = removed_dups(destination_file),
+    name = "dups-entries_default.nix",
+  )
+})
+
+testthat::test_that("remove_duplicate_entries(), don't remove duplicates if skip", {
+
+
+  dups_entries_default.nix <- paste0(testthat::test_path(),
+    "/testdata/default-nix_samples/dups-entries_default.nix")
+  tmpdir <- tempdir()
+  destination_file <- file.path(tempdir(), basename(dups_entries_default.nix))
+  file.copy(dups_entries_default.nix, destination_file, overwrite = TRUE)
+
+  on.exit(
+    unlink(tmpdir, recursive = TRUE, force = TRUE),
+    add = TRUE
+  )
+
+  removed_dups <- function(destination_file) {
+
+    out <- post_processing(destination_file, flag_git_archive = "", skip_post_processing = TRUE)
+
+    file.path(destination_file)
+  }
+
+
+  testthat::expect_snapshot_file(
+    path = removed_dups(destination_file),
+    name = "skip-dups-entries_default.nix",
   )
 })

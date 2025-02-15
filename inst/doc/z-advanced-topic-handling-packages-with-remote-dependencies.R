@@ -19,7 +19,7 @@ library(rix)
 #     repo_url = "https://github.com/jimhester/lookup/",
 #     commit = "eba63db477dd2f20153b75e2949eb333a36cccfc"
 #   ),
-#   ide = "other",
+#   ide = "none",
 #   project_path = path_default_nix,
 #   overwrite = TRUE,
 #   print = TRUE

@@ -364,20 +364,23 @@ VS Code (or Codium), Emacs, or Neovim meets the above requirements.
 (Note: Neovim is not covered here due to lack of experience—PRs
 welcome!) However, some editors perform better on certain platforms.</p>
 <p>Also, we recommend you uninstall R if it’s installed system-wide and
-also remove your local library of packages and instead, you have
+also remove your local library of packages and instead only use
 dedicated Nix shells to manage your projects. While we made our possible
 for Nix shells to not interfere with a system-installed R, we recommend
 users go into the habit of taking some minutes at the start of a project
 to properly set up their development environment.</p>
 <div id="recommended-setup-on-macos" class="section level4">
 <h4>Recommended setup on macOS</h4>
-<p>On macOS, RStudio will not be able to interact with Nix shells, so
-you cannot use it. As such, we recommend either VS Code (or Codium) or
-Positron. Emacs or Neovim are also good options. See the relevant
-sections below to set up any of these editors. We also recommend to
-install the editor on macOS directly, and configure it to interact with
-Nix shells, instead of using Nix to install the editor, even though it
-does take some more effort to configure.</p>
+<p>On macOS, RStudio will only be available through Nix and only for
+versions 4.4.3 or more recent, or after the 2025-02-28 if you’re using
+dates. For older versions of R or dates, RStudio is not available for
+macOS through Nix so you cannot use it. As such, we recommend either VS
+Code (or Codium) or Positron for older dates or versions. Emacs or
+Neovim are also good options. See the relevant sections below to set up
+any of these editors. We also recommend to install the editor on macOS
+directly, and configure it to interact with Nix shells, instead of using
+Nix to install the editor, even though it does take some more effort to
+configure.</p>
 </div>
 <div id="recommended-setup-on-windows" class="section level4">
 <h4>Recommended setup on Windows</h4>
@@ -450,12 +453,15 @@ system-level library of packages. Instead, you can sure the
 can uninstall the system-level R and library of packages.</p>
 <div id="rstudio-on-macos" class="section level3">
 <h3>RStudio on macOS</h3>
-<p>As of writing, RStudio is not yet available for macOS through
-Nixpkgs, which means that you cannot use RStudio to work with Nix
-shells. <a href="https://github.com/NixOS/nixpkgs/pull/362637">There is
-a draft PR that will introduce RStudio for macOS</a> though. As soon as
-this PR is merged, it will become possible to use RStudio on macOS with
-Nix shells. In the meantime, you might consider using <a href="#positron">Positron</a>.</p>
+<p>To use RStudio on macOS simply use <code>ide = &quot;rstudio&quot;</code>, but
+be aware that this will only work for R version 4.4.3 at least, or for a
+date on or after the 2025-02-28. If you don’t need to work with older
+versions of R or older date, RStudio is an appropriate choice. Then,
+build the environment using <code>nix-build</code> and drop into the
+shell using <code>nix-shell</code>. Then, type <code>rstudio</code> to
+start RStudio. If you wish, you can even put the <code>rstudio</code>
+command in the shell hook to start it immediately as you run
+<code>nix-shell</code>.</p>
 </div>
 <div id="rstudio-on-linux-or-windows" class="section level3">
 <h3>RStudio on Linux or Windows</h3>
@@ -478,8 +484,8 @@ Aborted (core dumped)</code></pre>
 </div>
 <div id="positron" class="section level2">
 <h2>Positron</h2>
-<div id="letting-nix-manage-positron" class="section level3">
-<h3>Letting Nix manage Positron</h3>
+<div id="letting-nix-manage-positron-on-any-operating-system" class="section level3">
+<h3>Letting Nix manage Positron on any operating system</h3>
 <p>If you want to install Positron with Nix, you need a call that looks
 like this:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
@@ -577,12 +583,13 @@ running from WSL. This is a very seamless experience.</p>
 that looks like this:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;languageserver&quot;</span>, ...), <span class="co"># languageserver is needed</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> ...,</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;code&quot;</span>, <span class="co"># or &quot;codium&quot;</span></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  ...</span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span></code></pre></div>
-<p>Or if you prefer to use the Code you have installed system-wide,
-then:</p>
+<p>But if you prefer to use the Code you have installed system-wide,
+then you need to add the <code>{languageserver}</code> package and use
+<code>ide = &quot;none&quot;</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;languageserver&quot;</span>, ...), <span class="co"># languageserver is needed</span></span>

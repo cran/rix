@@ -67,12 +67,12 @@
 #'   possibly with flags (separated by space), and/or do shell actions. You can
 #'   for example use `shell_hook = R`, if you want to directly enter the
 #'   declared Nix R session when dropping into the Nix shell.
-#' @param skip_post_processing Logical, defaults to FALSE. Should post-processing be
-#'   skipped? By default, if there are GitHub packages, the generated `default.nix`
-#'   is post-processed to eliminate potential duplicate definitions of packages,
-#'   which may happen if these packages have recursive remote dependencies. Set
-#'   to TRUE to skip post processing, which might be useful for debugging.
-#'
+#' @param ignore_remotes_cache Logical, defaults to FALSE. This variable is only
+#'   needed when adding packages from GitHub with remote dependencies, it can be
+#'   ignored otherwise. If `TRUE`, the cache of already processed GitHub remotes
+#'   will be ignored and all packages will be processed. If `FALSE`, the cache
+#'   will be used to skip already processed packages, which makes use of fewer
+#'   API calls. Setting this argument to `TRUE` can be useful for debugging.
 #' @details This function will write a `default.nix` and an `.Rprofile` in the
 #'   chosen path. Using the Nix package manager, it is then possible to build a
 #'   reproducible development environment using the `nix-build` command in the
@@ -85,15 +85,16 @@
 #'   It is possible to use environments built with Nix interactively, either
 #'   from the terminal, or using an interface such as RStudio. If you want to
 #'   use RStudio, set the `ide` argument to `"rstudio"`. Please be aware that
-#'   RStudio is not available for macOS through Nix. As such, you may want to
-#'   use another editor on macOS. To use Visual Studio Code (or Codium), set the
-#'   `ide` argument to `"code"` or `"codium"` respectively, which will add the
-#'   `{languageserver}` R package to the list of R packages to be installed by
-#'   Nix in that environment. It is also possible to use Positron by setting the
-#'   `ide` argument to `"positron"`. Setting the `ide` argument to an editor
-#'   will install it from Nix, meaning that each of your projects can have a
-#'   dedicated IDE (or IDE version). `"radian"` and `"rserver"` are also
-#'   options.
+#'   for macOS, RStudio is only available starting from R version 4.4.3 or from
+#'   the 2025-02-28. As such, you may want to use another editor on macOS if you
+#'   need to use an environment with an older version of R. To use Visual Studio
+#'   Code (or Codium), set the `ide` argument to `"code"` or `"codium"`
+#'   respectively, which will add the `{languageserver}` R package to the list
+#'   of R packages to be installed by Nix in that environment. It is also
+#'   possible to use Positron by setting the `ide` argument to `"positron"`.
+#'   Setting the `ide` argument to an editor will install it from Nix, meaning
+#'   that each of your projects can have a dedicated IDE (or IDE version).
+#'   `"radian"` and `"rserver"` are also options.
 #'
 #'   Instead of using Nix to install an IDE, you can also simply use the one you
 #'   have already installed on your system, with the exception of RStudio which
@@ -117,18 +118,15 @@
 #'   the Nix revision closest to that date, by setting `r_ver = "3.1.0"`, which
 #'   was the version of R current at the time. This ensures that Nix builds a
 #'   completely coherent environment. For security purposes, users that wish to
-#'   install packages from GitHub/Gitlab or from the CRAN archives must provide
+#'   install packages from GitHub/GitLab or from the CRAN archives must provide
 #'   a security hash for each package. `{rix}` automatically precomputes this
 #'   hash for the source directory of R packages from GitHub/Gitlab or from the
 #'   CRAN archives, to make sure the expected trusted sources that match the
-#'   precomputed hashes in the `default.nix` are downloaded. If Nix is
-#'   available, then the hash will be computed on the user's machine, however,
-#'   if Nix is not available, then the hash gets computed on a server that we
-#'   set up for this purposes. This server then returns the security hash as
-#'   well as the dependencies of the packages. It is possible to control this
-#'   behaviour using `options(rix.sri_hash=x)`, where `x` is one of "check_nix"
-#'   (the default), "locally" (use the local Nix installation) or "api_server"
-#'   (use the remote server to compute and return the hash).
+#'   precomputed hashes in the `default.nix` are downloaded, but only if Nix
+#'   is installed. If you need to generate an expression with such packages,
+#'   but are working on a system where you can't install Nix, consider generating
+#'   the expression using a continuous integration service, such as GitHub
+#'   Actions.
 #'
 #'   Note that installing packages from Git or old versions using the `"@"`
 #'   notation or local packages, does not leverage Nix's capabilities for
@@ -187,41 +185,60 @@
 #'   print = TRUE,
 #'   message_type = "simple",
 #'   shell_hook = NULL,
-#'   skip_post_processing = FALSE
+#'   ignore_remotes_cache = FALSE
 #' )
 #' }
-rix <- function(r_ver = NULL,
-                date = NULL,
-                r_pkgs = NULL,
-                system_pkgs = NULL,
-                git_pkgs = NULL,
-                local_r_pkgs = NULL,
-                tex_pkgs = NULL,
-                ide = "none",
-                project_path,
-                overwrite = FALSE,
-                print = FALSE,
-                message_type = "simple",
-                shell_hook = NULL,
-                skip_post_processing = FALSE) {
-  message_type <- match.arg(message_type,
+rix <- function(
+  r_ver = NULL,
+  date = NULL,
+  r_pkgs = NULL,
+  system_pkgs = NULL,
+  git_pkgs = NULL,
+  local_r_pkgs = NULL,
+  tex_pkgs = NULL,
+  ide = "none",
+  project_path,
+  overwrite = FALSE,
+  print = FALSE,
+  message_type = "simple",
+  shell_hook = NULL,
+  ignore_remotes_cache = FALSE
+) {
+  message_type <- match.arg(
+    message_type,
     choices = c("quiet", "simple", "verbose")
   )
 
   if (ide == "other") {
-    stop("ide = 'other' has been deprecated in favour of ide = 'none' as of version 0.15.0.")
+    stop(
+      "ide = 'other' has been deprecated in favour of ide = 'none' as of version 0.15.0."
+    )
   } else if (ide == "code") {
-    warning("The behaviour of the 'ide' argument changed since version 0.15.0; we highly recommend reading this vignette: https://docs.ropensci.org/rix/articles/e-configuring-ide.html if you want to use VS Code.")
-  } else if (!(ide %in% c(
-    "none", "code", "codium", "positron",
-    "radian", "rstudio", "rserver"
-  ))) {
-    stop("'ide' must be one of 'none', 'code', 'codium', 'positron', 'radian', 'rstudio', 'rserver'")
+    warning(
+      "The behaviour of the 'ide' argument changed since version 0.15.0; we highly recommend reading this vignette: https://docs.ropensci.org/rix/articles/e-configuring-ide.html if you want to use VS Code."
+    )
+  } else if (
+    !(ide %in%
+      c(
+        "none",
+        "code",
+        "codium",
+        "positron",
+        "radian",
+        "rstudio",
+        "rserver"
+      ))
+  ) {
+    stop(
+      "'ide' must be one of 'none', 'code', 'codium', 'positron', 'radian', 'rstudio', 'rserver'"
+    )
   }
 
   if (!is.null(date) && !(date %in% available_dates())) {
     # nolint start: line_length_linter
-    stop("The provided date is not available.\nRun available_dates() to see which dates are available.")
+    stop(
+      "The provided date is not available.\nRun available_dates() to see which dates are available."
+    )
     # nolint end
   }
 
@@ -230,12 +247,21 @@ rix <- function(r_ver = NULL,
   }
 
   if (is.null(date) && r_ver == "latest") {
-    stop("'latest' was deprecated in favour of 'latest-upstream' as of version 0.14.0.")
+    stop(
+      "'latest' was deprecated in favour of 'latest-upstream' as of version 0.14.0."
+    )
   }
 
   if (
     !(message_type %in% c("simple", "quiet")) &&
-      r_ver %in% c("bleeding-edge", "frozen-edge", "r-devel", "bioc-devel", "r-devel-bioc-devel")
+      r_ver %in%
+        c(
+          "bleeding-edge",
+          "frozen-edge",
+          "r-devel",
+          "bioc-devel",
+          "r-devel-bioc-devel"
+        )
   ) {
     warning(
       "You chose 'bleeding-edge', 'frozen-edge', 'r-devel', 'bioc-devel' or 'r-devel-bioc-devel'
@@ -246,7 +272,9 @@ before continuing."
   }
 
   if (
-    identical(ide, "rstudio") && is.null(r_pkgs) && is.null(git_pkgs) &&
+    identical(ide, "rstudio") &&
+      is.null(r_pkgs) &&
+      is.null(git_pkgs) &&
       is.null(local_r_pkgs)
   ) {
     stop(
@@ -266,16 +294,19 @@ before continuing."
   )
 
   if (
-    message_type != "quiet" && Sys.info()["sysname"] == "Darwin" &&
-      ide == "rstudio"
+    message_type != "quiet" &&
+      Sys.info()["sysname"] == "Darwin" &&
+      ide == "rstudio" &&
+      ((r_ver < "4.4.3" && is.null(date)) ||
+        (is.null(r_ver) && date < "2025-02-28"))
   ) {
     warning(
-      "Your detected operating system is macOS, and you chose
-'rstudio' as the IDE. Please note that 'rstudio' is not
-available through 'nixpkgs' for macOS, so the expression you
-generated will not build on macOS. If you wish to build this
-expression on macOS, change the 'ide =' argument to either
-'code' or 'none'. Please refer to the macOS-specific vignette
+      "Your operating system is detected as macOS, but you selected 'rstudio'
+for an R version or date that does not support it.
+To use RStudio on macOS, select at least R 4.4.3 or a
+date on or after 2025-02-28. If you require an older R version or date,
+choose a different IDE for compatibility.
+Please refer to the macOS-specific vignette
 https://docs.ropensci.org/rix/articles/b2-setting-up-and-using-rix-on-macos.html
 for more details."
     )
@@ -303,9 +334,7 @@ for more details."
   cran_pkgs <- get_rpkgs(r_pkgs, ide)
 
   # If there are R packages, passes the string "rpkgs" to buildInputs
-  flag_rpkgs <- if (
-    is.null(cran_pkgs$rPackages) || cran_pkgs$rPackages == ""
-  ) {
+  flag_rpkgs <- if (is.null(cran_pkgs$rPackages) || cran_pkgs$rPackages == "") {
     ""
   } else {
     "rpkgs"
@@ -353,7 +382,8 @@ for more details."
 
   # If there are wrapped packages (for example for RStudio), passes the "wrapped_pkgs"
   # to buildInputs
-  flag_wrapper <- if (ide %in% names(attrib) && flag_rpkgs != "") "wrapped_pkgs" else ""
+  flag_wrapper <- if (ide %in% names(attrib) && flag_rpkgs != "")
+    "wrapped_pkgs" else ""
 
   # Correctly formats shellHook for Nix's mkShell
   shell_hook <- if (!is.null(shell_hook) && nzchar(shell_hook)) {
@@ -370,24 +400,38 @@ for more details."
       ide
     ),
     generate_rpkgs(cran_pkgs$rPackages, flag_rpkgs),
-    generate_git_archived_pkgs(git_pkgs, cran_pkgs$archive_pkgs, flag_git_archive),
+    generate_git_archived_pkgs(
+      git_pkgs,
+      cran_pkgs$archive_pkgs,
+      flag_git_archive,
+      ignore_remotes_cache = ignore_remotes_cache
+    ),
     generate_tex_pkgs(tex_pkgs),
     generate_local_r_pkgs(local_r_pkgs, flag_local_r_pkgs),
     generate_system_pkgs(system_pkgs, r_pkgs, ide),
-    generate_wrapped_pkgs(ide, attrib, flag_git_archive, flag_rpkgs, flag_local_r_pkgs),
+    generate_wrapped_pkgs(
+      ide,
+      attrib,
+      flag_git_archive,
+      flag_rpkgs,
+      flag_local_r_pkgs
+    ),
     generate_shell(
-      flag_git_archive, flag_rpkgs, flag_tex_pkgs,
-      flag_local_r_pkgs, flag_wrapper, shell_hook
+      flag_git_archive,
+      flag_rpkgs,
+      flag_tex_pkgs,
+      flag_local_r_pkgs,
+      flag_wrapper,
+      shell_hook
     ),
     collapse = "\n"
   )
 
   # Generate default.nix file # nolint next: object_name_linter
-
   default.nix <- strsplit(default.nix, split = "\n")[[1]]
 
-  # Remove potential duplicates
-  default.nix <- post_processing(default.nix, flag_git_archive, skip_post_processing)
+  # Remove consecutive empty lines
+  default.nix <- remove_empty_lines(default.nix)
 
   if (print) {
     print(default.nix)
@@ -400,15 +444,18 @@ for more details."
     con <- file(default.nix_path, open = "wb", encoding = "native.enc")
     on.exit(close(con))
 
-
     writeLines(enc2utf8(default.nix), con = con, useBytes = TRUE)
 
     if (file.exists(.Rprofile_path)) {
-      if (!any(grepl(
-        "File generated by `rix::rix_init()",
-        readLines(.Rprofile_path)
-      ))) {
-        if (message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")) {
+      if (
+        !any(grepl(
+          "File generated by `rix::rix_init()",
+          readLines(.Rprofile_path)
+        ))
+      ) {
+        if (
+          message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")
+        ) {
           message("\n\n### Successfully generated `default.nix` ###\n\n")
         }
         warning(
@@ -417,7 +464,9 @@ for more details."
           "to ensure correct functioning of your Nix environment. ###\n\n"
         )
       } else {
-        if (message_type != "quiet"  && identical(Sys.getenv("TESTTHAT"), "false")) {
+        if (
+          message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")
+        ) {
           message(
             sprintf(
               "\n\n### Successfully generated `default.nix` in %s. ",
@@ -433,13 +482,15 @@ for more details."
         rprofile_action = "create_missing",
         # 'verbose' is too chatty for rix()
         # hence why it's transformed to "simple"
-        message_type = ifelse(message_type == "verbose",
-          "simple", message_type
-        )
+        message_type = ifelse(message_type == "verbose", "simple", message_type)
       )
 
-      if (message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")) {
-        message("\n\n### Successfully generated `default.nix` and `.Rprofile` ###\n\n")
+      if (
+        message_type != "quiet" && identical(Sys.getenv("TESTTHAT"), "false")
+      ) {
+        message(
+          "\n\n### Successfully generated `default.nix` and `.Rprofile` ###\n\n"
+        )
       }
     }
   } else {
@@ -450,35 +501,11 @@ for more details."
     }
     stop(
       paste0(
-        "`default.nix` exists in ", project_path,
+        "`default.nix` exists in ",
+        project_path,
         ". Set `overwrite == TRUE` to overwrite."
       )
     )
   }
-
   on.exit(close(con))
-
-
-}
-
-
-#' @noRd
-post_processing <- function(default.nix, flag_git_archive, skip_post_processing){
-
-  # Remove potential duplicates
-  do_processing <- if (flag_git_archive == "") {
-                     FALSE
-                   } else {
-                     TRUE
-                   }
-
-  # only do post processing if there are git packages
-  # or if skip_post_processing is TRUE
-  if (all(c(do_processing, !skip_post_processing))){
-    out <- remove_duplicate_entries(default.nix)
-  } else {
-    out <-default.nix
-  }
-
-  out
 }

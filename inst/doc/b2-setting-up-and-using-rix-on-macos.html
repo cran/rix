@@ -474,24 +474,28 @@ in a unique Nix path) appear on the R library path.</p>
 </div>
 <div id="rstudio-and-other-development-interfaces-on-macos" class="section level3">
 <h3>RStudio and other development interfaces on macOS</h3>
-<p>As of writing, RStudio cannot be installed through
-<code>nixpkgs</code> for macOS, and if you wish to use RStudio with a
-Nix environment, you have to install it through <code>nixpkgs</code>.
-This means that it is impossible to use RStudio and a Nix environment on
-macOS. When you try to generate an expression with
-<code>ide = &quot;rstudio&quot;</code> on macOS, this will raise a warning. Here
-are the options you have:</p>
+<p>RStudio installed via traditional means cannot be used with Nix
+shells. To use RStudio, you must install it through Nix. As of now,
+RStudio in <code>nixpkgs</code> for macOS is only available for R 4.4.3
+or later, or for dates on or after 2025-02-28. Using RStudio with a Nix
+environment for older R versions or dates is not possible, you will need
+to choose a different IDE, or no IDE. If you attempt to generate an
+expression with <code>ide = &quot;rstudio&quot;</code> on macOS for R versions
+older than 4.4.3 or dates before 2025-02-28, a warning will be raised.
+Your options are:</p>
 <ul>
+<li>set <code>r_ver = 4.4.3</code> or pick a date on or after the
+2025-02-28 if you don’t need to run an older version of R;</li>
 <li>ignore the warning, because the environment will be built on a Linux
 distribution (even though you generated the expression on macOS) and
 used on a Linux distribution;</li>
-<li>change the <code>ide =</code> argument to either
-<code>&quot;other&quot;</code> or <code>&quot;code&quot;</code> or <code>&quot;positron&quot;</code>.
-Use <code>&quot;code&quot;</code> if you want to use VS Code and
-<code>&quot;other&quot;</code> for any other editor, like Vim or Emacs. These
-other editors don’t need to be installed through <code>nixpkgs</code> to
-use Nix environments, unlike RStudio. See the
-<code>vignette(&quot;e-configure-ide&quot;)</code> for more details;</li>
+<li>change the <code>ide =</code> argument to either <code>&quot;none&quot;</code>
+or <code>&quot;code&quot;</code> or <code>&quot;positron&quot;</code>. Use
+<code>&quot;code&quot;</code> if you want to use VS Code and <code>&quot;other&quot;</code>
+for any other editor, like Vim or Emacs. These other editors don’t need
+to be installed through <code>nixpkgs</code> to use Nix environments,
+unlike RStudio. See the <code>vignette(&quot;e-configure-ide&quot;)</code> for
+more details;</li>
 <li>if you’re working on a pipeline with the <code>{targets}</code>
 package, you could run it on GitHub Actions. This means you could work
 on the code on RStudio outside of the Nix environment, as the code will
@@ -505,8 +509,6 @@ reproducibility purposes;</li>
 <li>use <em>subshells</em> to execute only the code you need to run in a
 specific environment. See this vignette
 <code>vignette(&quot;z-advanced-topic-running-r-or-shell-code-in-nix-from-r&quot;)</code>;</li>
-<li>help us package RStudio for macOS on <code>nixpgs</code>. See <a href="https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/rstudio/default.nix">here</a>,
-the Nix expression for RStudio.</li>
 </ul>
 <p>We recommend you continue with the next vignette before tackling the
 more advanced topics listed above:

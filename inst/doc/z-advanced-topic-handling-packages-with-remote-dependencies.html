@@ -513,12 +513,54 @@ of the commit provided by the user.</p>
 <p><code>{rix}</code> is able to fetch a fixed commit specified in
 DESCRIPTION files using a commit hash. This also works in a short form.
 For example <code>ropensci/rix@88bb24f</code> in <code>Remotes</code> in
-the DESCRIPTION file will work. However, if a branch name
-(e.g. <code>ropensci/rix@available_dates</code>), tag
+the DESCRIPTION file will work. However, if a branch name (e.g.
+<code>ropensci/rix@available_dates</code>), tag
 (e.g. <code>ropensci/rix@v.0.8.0</code>), or pull request number
 (e.g. <code>ropensci/rix#100</code>) is specified, <code>{rix}</code>
 will ignore this and will try to fetch the closest commit (see
 above).</p>
+</div>
+<div id="duplicated-packages" class="section level3">
+<h3>Duplicated packages</h3>
+<p>Let’s say package <code>A</code> depends on package <code>B</code>
+and <code>C</code>, but package <code>B</code> also depends on package
+<code>C</code>. Then this would usually result in a duplicate entry of
+package <code>C</code> in the <code>default.nix</code> file. To avoid
+this, <code>{rix}</code> will cache all packages that have been fetched
+from GitHub and will not fetch them again if they are already in the
+cache. This also avoids unnecessary API calls to GitHub. If you would
+like to disable this feature, you can set
+<code>ignore_remotes_cache = TRUE</code> in the <code>rix()</code> call,
+which might be useful for debugging purposes. Be aware that you need to
+manually remove the duplicates from the <code>default.nix</code> file
+before <code>nix-build</code> will work in this case.</p>
+<p>Unlike with packages hosted on CRAN, packages hosted on GitHub or
+GitLab may incorrectly specify their dependencies. <code>{rix}</code>
+will always try to generate syntactically correct expressions, but if
+dependencies are not correctly specified (for example, if a remote
+dependency got updated in a way that breaks the main package), you will
+need to manually inspect and fix the file.</p>
+<p>Consider the following scenario: let’s say the commit of package
+<code>A</code> that you specify in the <code>rix()</code> call was
+committed on the 1st of January 2025. Then <code>{rix}</code> will try
+to find the commit, whose date is closest to the 1st of January 2025,
+for package <code>B</code> and <code>C</code>. Let’s say this is the 1st
+November 2024 for package <code>B</code> and the 1st December 2024 for
+package <code>C</code>. By default (so
+<code>ignore_remotes_cache = FALSE</code>), then <code>{rix}</code> will
+fetch commits on these dates. However, if you would ignore the cache (by
+setting <code>ignore_remotes_cache = TRUE</code>), then
+<code>{rix}</code> will fetch package <code>C</code> twice, once for the
+commit of the 1st December 2024 as before (closest date that is earlier
+than the commit date of package <code>A</code>) and once for a date
+before the 1st November 2024 (closest date that is earlier than the
+commit date of package <code>B</code>). Again you would need to manually
+remove the duplicates from the <code>default.nix</code> file before
+<code>nix-build</code> will work. Be aware of dependency issues: for
+example the older version of package <code>C</code> might be
+incompatible with package <code>A</code>, so you might need to manually
+look for the right commit of <code>C</code> that works with both
+<code>A</code> and <code>B</code>.</p>
 </div>
 <div id="authenticating-to-github" class="section level3">
 <h3>Authenticating to GitHub</h3>

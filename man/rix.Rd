@@ -18,7 +18,7 @@ rix(
   print = FALSE,
   message_type = "simple",
   shell_hook = NULL,
-  skip_post_processing = FALSE
+  ignore_remotes_cache = FALSE
 )
 }
 \arguments{
@@ -97,11 +97,12 @@ possibly with flags (separated by space), and/or do shell actions. You can
 for example use \code{shell_hook = R}, if you want to directly enter the
 declared Nix R session when dropping into the Nix shell.}
 
-\item{skip_post_processing}{Logical, defaults to FALSE. Should post-processing be
-skipped? By default, if there are GitHub packages, the generated \code{default.nix}
-is post-processed to eliminate potential duplicate definitions of packages,
-which may happen if these packages have recursive remote dependencies. Set
-to TRUE to skip post processing, which might be useful for debugging.}
+\item{ignore_remotes_cache}{Logical, defaults to FALSE. This variable is only
+needed when adding packages from GitHub with remote dependencies, it can be
+ignored otherwise. If \code{TRUE}, the cache of already processed GitHub remotes
+will be ignored and all packages will be processed. If \code{FALSE}, the cache
+will be used to skip already processed packages, which makes use of fewer
+API calls. Setting this argument to \code{TRUE} can be useful for debugging.}
 }
 \value{
 Nothing, this function only has the side-effect of writing two files:
@@ -127,15 +128,16 @@ environment.
 It is possible to use environments built with Nix interactively, either
 from the terminal, or using an interface such as RStudio. If you want to
 use RStudio, set the \code{ide} argument to \code{"rstudio"}. Please be aware that
-RStudio is not available for macOS through Nix. As such, you may want to
-use another editor on macOS. To use Visual Studio Code (or Codium), set the
-\code{ide} argument to \code{"code"} or \code{"codium"} respectively, which will add the
-\code{{languageserver}} R package to the list of R packages to be installed by
-Nix in that environment. It is also possible to use Positron by setting the
-\code{ide} argument to \code{"positron"}. Setting the \code{ide} argument to an editor
-will install it from Nix, meaning that each of your projects can have a
-dedicated IDE (or IDE version). \code{"radian"} and \code{"rserver"} are also
-options.
+for macOS, RStudio is only available starting from R version 4.4.3 or from
+the 2025-02-28. As such, you may want to use another editor on macOS if you
+need to use an environment with an older version of R. To use Visual Studio
+Code (or Codium), set the \code{ide} argument to \code{"code"} or \code{"codium"}
+respectively, which will add the \code{{languageserver}} R package to the list
+of R packages to be installed by Nix in that environment. It is also
+possible to use Positron by setting the \code{ide} argument to \code{"positron"}.
+Setting the \code{ide} argument to an editor will install it from Nix, meaning
+that each of your projects can have a dedicated IDE (or IDE version).
+\code{"radian"} and \code{"rserver"} are also options.
 
 Instead of using Nix to install an IDE, you can also simply use the one you
 have already installed on your system, with the exception of RStudio which
@@ -158,18 +160,15 @@ have looked at the time of \code{{ggplot2}}'s version 2.2.1 release, then use
 the Nix revision closest to that date, by setting \code{r_ver = "3.1.0"}, which
 was the version of R current at the time. This ensures that Nix builds a
 completely coherent environment. For security purposes, users that wish to
-install packages from GitHub/Gitlab or from the CRAN archives must provide
+install packages from GitHub/GitLab or from the CRAN archives must provide
 a security hash for each package. \code{{rix}} automatically precomputes this
 hash for the source directory of R packages from GitHub/Gitlab or from the
 CRAN archives, to make sure the expected trusted sources that match the
-precomputed hashes in the \code{default.nix} are downloaded. If Nix is
-available, then the hash will be computed on the user's machine, however,
-if Nix is not available, then the hash gets computed on a server that we
-set up for this purposes. This server then returns the security hash as
-well as the dependencies of the packages. It is possible to control this
-behaviour using \code{options(rix.sri_hash=x)}, where \code{x} is one of "check_nix"
-(the default), "locally" (use the local Nix installation) or "api_server"
-(use the remote server to compute and return the hash).
+precomputed hashes in the \code{default.nix} are downloaded, but only if Nix
+is installed. If you need to generate an expression with such packages,
+but are working on a system where you can't install Nix, consider generating
+the expression using a continuous integration service, such as GitHub
+Actions.
 
 Note that installing packages from Git or old versions using the \code{"@"}
 notation or local packages, does not leverage Nix's capabilities for
@@ -227,7 +226,7 @@ rix(
   print = TRUE,
   message_type = "simple",
   shell_hook = NULL,
-  skip_post_processing = FALSE
+  ignore_remotes_cache = FALSE
 )
 }
 }

@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 ## ----eval = FALSE-------------------------------------------------------------
 # rix(
 #   date = ...,
-#   r_pkgs = c("languageserver", ...), # languageserver is needed
+#   r_pkgs = ...,
 #   ide = "code", # or "codium"
 #   ...
 # )

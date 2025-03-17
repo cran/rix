@@ -150,6 +150,17 @@ library(rix)
 # )
 
 ## ----eval = F-----------------------------------------------------------------
+# rix(
+#   date = "2025-02-17",
+#   r_pkgs = "ggplot2",
+#   py_pkgs = list(
+#     py_version = "3.12",
+#     py_pkgs = c("polars", "great-tables")
+#   ),
+#   overwrite = TRUE
+# )
+
+## ----eval = F-----------------------------------------------------------------
 # path_default_nix <- tempdir()
 # 
 # rix(

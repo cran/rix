@@ -12,7 +12,7 @@
 
 
 
-<title>d1 - Installing R packages in a Nix environment</title>
+<title>d1 - Installing R and Python packages in a Nix environment</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -336,8 +336,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">d1 - Installing R packages in a Nix
-environment</h1>
+<h1 class="title toc-ignore">d1 - Installing R and Python packages in a
+Nix environment</h1>
 
 
 
@@ -545,6 +545,26 @@ first build it using <code>devtools::build()</code> to build the
 source code to your package on GitHub and installing it from GitHub
 instead.</p>
 </div>
+<div id="installing-python-packages" class="section level2">
+<h2>Installing Python packages</h2>
+<p>It is also possible to add Python packages to an environment, by
+passing a list of two elements to the <code>py_pkgs</code> argument of
+<code>rix()</code>. This list needs to first specify a Python version,
+and then an atomic character vector of Python packages:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-02-17&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">py_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">py_version =</span> <span class="st">&quot;3.12&quot;</span>, </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">py_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;polars&quot;</span>, <span class="st">&quot;great-tables&quot;</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  ),</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will install Python 3.12, the <code>polars</code> and
+<code>great-tables</code> packages, but also <code>ipykernel</code> and
+<code>pip</code> to ensure the Python interpreter works correctly with
+IDEs such as Positron.</p>
+</div>
 <div id="converting-from-an-renv.lock-file" class="section level2">
 <h2>Converting from an renv.lock file</h2>
 <p><code>{rix}</code> also includes an <code>renv2nix()</code> function
@@ -556,27 +576,27 @@ learn more.</p>
 <h2>A complete example</h2>
 <p>This example shows how to install packages from CRAN, from the CRAN
 archives and from GitHub:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    ),</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    )</span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>  ),</span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    ),</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    )</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  ),</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>#&gt; # This file was generated by the {rix} R package v0.7.1 on 2024-07-01
 #&gt; # with following call:
 #&gt; # &gt;rix(r_ver = &quot;79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a&quot;,

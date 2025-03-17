@@ -5,7 +5,8 @@
 - [Quick start for returning users](#quick-start-for-returning-users)
 - [Getting started for new users](#getting-started-for-new-users)
   - [Docker](#docker)
-- [Why Nix? Comparison with Docker+renv/Conda/Guix](#how-is-nix-different-from-dockerrenvgroundhogranganaminicondaguix-or-why-nix)
+- [Why Nix? Comparison with
+  Docker+renv/Conda/Guix](#how-is-nix-different-from-dockerrenvgroundhogranganaminicondaguix-or-why-nix)
 - [Contributing](#contributing)
 - [Thanks](#thanks)
 - [Recommended reading](#recommended-reading)
@@ -124,6 +125,23 @@ rix(
   project_path = path_default_nix,
   overwrite = TRUE,
   print = TRUE
+)
+```
+
+It is also possible to add Python packages to an environment, by passing
+a list of two elements to the `py_pkgs` argument of `rix()`. This list
+needs to first specify a Python version, and then an atomic character
+vector of Python packages:
+
+``` r
+rix(
+  date = "2025-02-17",
+  r_pkgs = "ggplot2",
+  py_pkgs = list(
+    py_version = "3.12", 
+    py_pkgs = c("polars", "great-tables")
+  ),
+  overwrite = TRUE
 )
 ```
 
@@ -422,4 +440,3 @@ for creating `{rix}`’s logo!
   Nix](https://rgoswami.me/posts/rethinking-r-nix/)
 - [Blog post: Searching and installing old versions of Nix
   packages](https://lazamar.github.io/download-specific-package-version-with-nix/)
-

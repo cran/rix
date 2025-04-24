@@ -507,6 +507,9 @@ environments, by generating a <code>default.nix</code> like so:</p>
 </div>
 <div id="case-2-you-have-r-installed-through-your-oss-package-manager" class="section level2">
 <h2>Case 2: you have R installed through your OS’s package manager</h2>
+<p><em>Note: this package’s authors recommend you only have R versions
+managed by Nix, and not mix a system-wide installation of R with
+Nix-managed R shells.</em></p>
 <p>If you have installed R on your system through the usual means of
 installation (so not with Nix, as described before), you can install the
 <code>{rix}</code> package as usual as well. To install
@@ -521,6 +524,15 @@ installation (so not with Nix, as described before), you can install the
 expressions. Consult the next vignette
 <code>vignette(&quot;c-using-rix-to-build-project-specific-environments&quot;)</code>
 to learn more.</p>
+</div>
+<div id="configuring-an-ide" class="section level2">
+<h2>Configuring an IDE</h2>
+<p>We recommend you continue with the next vignettes vignette
+<code>vignette(&quot;d1-installing-r-packages-in-a-nix-environment&quot;)</code>
+and
+<code>vignette(&quot;d2-installing-system-tools-and-texlive-packages-in-a-nix-environment&quot;)</code>,
+and also <code>vignette(&quot;e-configuring-ide&quot;)</code> which will guide you
+through setting you your editor to use Nix shells effectively.</p>
 </div>
 <div id="other-nixes" class="section level2">
 <h2>Other “Nix”es</h2>

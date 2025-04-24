@@ -143,6 +143,24 @@ library(rix)
 #> }
 
 ## ----eval = F-----------------------------------------------------------------
+# path_default_nix <- tempdir()
+# 
+# rix(
+#   r_ver = "4.5.0",
+#   r_pkgs = c("dplyr"),
+#   system_pkgs = NULL,
+#   git_pkgs = list(
+#     package_name = "BPCells",
+#     repo_url = "https://github.com/bnprks/BPCells/r",
+#     commit = "16faeade0a26b392637217b0caf5d7017c5bdf9b"
+#   ),
+#   ide = "none",
+#   project_path = ".",
+#   overwrite = TRUE,
+#   print = TRUE
+# )
+
+## ----eval = F-----------------------------------------------------------------
 # rix(
 #   r_ver = "4.3.1",
 #   local_r_pkgs = c("chronicler_0.2.1.tar.gz", "knitr_1.43.tar.gz"),
@@ -153,7 +171,7 @@ library(rix)
 # rix(
 #   date = "2025-02-17",
 #   r_pkgs = "ggplot2",
-#   py_pkgs = list(
+#   py_conf = list(
 #     py_version = "3.12",
 #     py_pkgs = c("polars", "great-tables")
 #   ),

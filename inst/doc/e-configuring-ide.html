@@ -628,6 +628,14 @@ use <code>brew</code>):</p>
 <pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA direnv</code></pre>
 <p>This will install <code>direnv</code> and make it available even
 outside of Nix shells!</p>
+<p>Then, we highly recommend to install the <code>nix-direnv</code>
+extension:</p>
+<pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA nix-direnv</code></pre>
+<p>It is not mandatory to use <code>nix-direnv</code> if you already
+have <code>direnv</code>, but it’ll make loading environments much
+faster and seamless. Finally, if you haven’t used <code>direnv</code>
+before, don’t forget <a href="https://direnv.net/docs/hook.html">this
+last step</a>.</p>
 <p>Then, in Code, install the <a href="https://github.com/direnv/direnv-vscode">direnv</a> extension (and
 also the WSL extension if you’re on Windows, as explained in the
 official documentation linked above!). Finally, add a file called
@@ -669,12 +677,12 @@ open Code should not prompt you anymore.</p>
 Emacs available through Nix (find these versions <a href="https://search.nixos.org/packages?channel=unstable&amp;from=0&amp;size=50&amp;sort=relevance&amp;type=packages&amp;query=emacs">here</a>)
 so install whatever version you want by putting it in
 <code>system_pkgs</code> like so:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;emacs&quot;</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  ...</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;emacs&quot;</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  ...</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>)</span></code></pre></div>
 <p>This doesn’t require any further configuration to use. Simply drop in
 the Nix shell using <code>nix-shell</code> and type <code>emacs</code>.
 You can set the <code>emacs</code> command as the shell hook so Emacs
@@ -699,12 +707,12 @@ sudo apt install -y emacs</code></pre>
 <p>Because you’re using the Emacs from your operating system, generate
 <code>default.nix</code> shells by setting
 <code>ide = &quot;other&quot;</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  ...</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  ...</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>)</span></code></pre></div>
 <p>Then, you need to install a piece of software called
 <code>direnv</code>: <code>direnv</code> will automatically load Nix
 shells when you open a project that contains a <code>default.nix</code>
@@ -719,6 +727,14 @@ use <code>brew</code>):</p>
 <pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA direnv</code></pre>
 <p>This will install <code>direnv</code> and make it available even
 outside of Nix shells!</p>
+<p>Then, we highly recommend to install the <code>nix-direnv</code>
+extension:</p>
+<pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA nix-direnv</code></pre>
+<p>It is not mandatory to use <code>nix-direnv</code> if you already
+have <code>direnv</code>, but it’ll make loading environments much
+faster and seamless. Finally, if you haven’t used <code>direnv</code>
+before, don’t forget <a href="https://direnv.net/docs/hook.html">this
+last step</a>.</p>
 <p>Then install the Emacs <code>direnv</code> <a href="https://github.com/wbolster/emacs-direnv">package</a>. Finally,
 add a file called <code>.envrc</code> and simply write
 <code>use nix</code> in it. Now, open the project’s folder in a terminal

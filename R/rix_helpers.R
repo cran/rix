@@ -201,38 +201,38 @@ generate_tex_pkgs <- function(tex_pkgs) {
   }
 }
 
-#' generate_py_pkgs Internal function that generates the string containing the
+#' generate_py_conf Internal function that generates the string containing the
 #' correct Nix expression to get Python packages.
-#' @param py_pkgs List. A list of two elements, `py_version` and `py_pkgs`.
-#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_pkgs`
+#' @param py_conf List. A list of two elements, `py_version` and `py_conf`.
+#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_conf`
 #'   must be an atomic vector of packages names, for example
-#'   `py_pkgs = c("polars", "plotnine", "great-tables")`.
-#' @param flag_py_pkgs Character, are there any Python packages at all?
+#'   `py_conf = c("polars", "plotnine", "great-tables")`.
+#' @param flag_py_conf Character, are there any Python packages at all?
 #' @noRd
-generate_py_pkgs <- function(py_pkgs, flag_py_pkgs) {
-  if (flag_py_pkgs == "") {
+generate_py_conf <- function(py_conf, flag_py_conf) {
+  if (flag_py_conf == "") {
     NULL
   } else {
     py_version <- paste0(
       "python",
-      gsub("\\.", "", py_pkgs$py_version),
+      gsub("\\.", "", py_conf$py_version),
       "Packages"
     )
 
     # I'm adding pip and ipykernel because Positron complains otherwise
-    py_pkgs <- paste(
-      c("", "pip", "ipykernel", sort(py_pkgs$py_pkgs)),
+    py_conf <- paste(
+      c("", "pip", "ipykernel", sort(py_conf$py_pkgs)),
       collapse = "\n      "
     )
 
     sprintf(
       "
-  pypkgs = builtins.attrValues {
+  pyconf = builtins.attrValues {
     inherit (pkgs.%s) %s;
   };
 ",
       py_version,
-      py_pkgs
+      py_conf
     )
   }
 }
@@ -241,27 +241,27 @@ generate_py_pkgs <- function(py_pkgs, flag_py_pkgs) {
 #' correctly for Nix.
 #' @param system_pkgs Character, list of system packages to install.
 #' @param r_pkgs Character, list of R packages to install.
-#' @param py_pkgs List. A list of two elements, `py_version` and `py_pkgs`.
-#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_pkgs`
+#' @param py_conf List. A list of two elements, `py_version` and `py_conf`.
+#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_conf`
 #'   must be an atomic vector of packages names, for example
-#'   `py_pkgs = c("polars", "plotnine", "great-tables")`.
+#'   `py_conf = c("polars", "plotnine", "great-tables")`.
 #' @param ide Character, ide to use.
 #' @noRd
-get_system_pkgs <- function(system_pkgs, r_pkgs, py_pkgs, ide) {
+get_system_pkgs <- function(system_pkgs, r_pkgs, py_conf, ide) {
   # We always need these packages
 
   which_ide <- switch(
     ide,
-    "code" = "vscode-fhs",
-    "codium" = "vscodium-fhs",
+    "code" = "vscode",
+    "codium" = "vscodium",
     "positron" = "positron-bin",
     NULL
   )
 
-  if (is.null(py_pkgs)) {
+  if (is.null(py_conf)) {
     py_version <- NULL
   } else {
-    py_version <- paste0("python", gsub("\\.", "", py_pkgs$py_version))
+    py_version <- paste0("python", gsub("\\.", "", py_conf$py_version))
   }
 
   system_pkgs <- sort(c(
@@ -276,7 +276,7 @@ get_system_pkgs <- function(system_pkgs, r_pkgs, py_pkgs, ide) {
   # If the user wants the R {quarto} package, then the quarto software needs to
   # be installed
   system_pkgs <- if (any(grepl("quarto", r_pkgs))) {
-    unique(c(system_pkgs, "quarto"))
+    unique(c(system_pkgs, "quarto", "which", "pandoc"))
   } else {
     unique(system_pkgs)
   }
@@ -288,20 +288,20 @@ get_system_pkgs <- function(system_pkgs, r_pkgs, py_pkgs, ide) {
 #' the correct Nix expression to get system packages.
 #' @param system_pkgs Character, list of system packages to install.
 #' @param r_pkgs Character, list of R packages packages to install.
-#' @param py_pkgs List. A list of two elements, `py_version` and `py_pkgs`.
-#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_pkgs`
+#' @param py_conf List. A list of two elements, `py_version` and `py_conf`.
+#'   `py_version` must be of the form `"3.12"` for Python 3.12 and `py_conf`
 #'   must be an atomic vector of packages names, for example
-#'   `py_pkgs = c("polars", "plotnine", "great-tables")`.
+#'   `py_conf = c("polars", "plotnine", "great-tables")`.
 #' @param ide Character, ide to use.
 #' @noRd
-generate_system_pkgs <- function(system_pkgs, r_pkgs, py_pkgs, ide) {
+generate_system_pkgs <- function(system_pkgs, r_pkgs, py_conf, ide) {
   sprintf(
     "
   system_packages = builtins.attrValues {
     inherit (pkgs) %s;
   };
 ",
-    get_system_pkgs(system_pkgs, r_pkgs, py_pkgs, ide)
+    get_system_pkgs(system_pkgs, r_pkgs, py_conf, ide)
   )
 }
 
@@ -356,16 +356,14 @@ generate_locale_variables <- function() {
     )
   }
 
-  locale_vars <- paste(
+  locale_vars <-
     Map(
-      function(x, nm) paste0(nm, " = ", '"', x, '"'),
+      function(x, nm) paste0(nm, " = ", '"', x, '"', ";"),
       nm = names(locale_variables),
       x = locale_variables
-    ),
-    collapse = ";\n   "
-  )
+    )
 
-  paste0(locale_vars, ";\n")
+  paste(locale_vars, collapse = "\n    ")
 }
 
 
@@ -413,7 +411,7 @@ generate_wrapped_pkgs <- function(
 #' @param flag_git_archive Character, are there R packages from GitHub at all?
 #' @param flag_rpkgs Character, are there any R packages at all?
 #' @param flag_tex_pkgs Character, are there any LaTex packages at all?
-#' @param flag_py_pkgs Character, are there any Python packages at all?
+#' @param flag_py_conf Character, are there any Python packages at all?
 #' @param flag_local_r_pkgs Character, are there any wrapped packages at all?
 #' @param flag_wrapper Character, are there any wrapped packages at all?
 #' @param shell_hook Character, the mkShell's shellHook.
@@ -422,7 +420,8 @@ generate_shell <- function(
   flag_git_archive,
   flag_rpkgs,
   flag_tex_pkgs,
-  flag_py_pkgs,
+  py_conf,
+  flag_py_conf,
   flag_local_r_pkgs,
   flag_wrapper,
   shell_hook
@@ -432,15 +431,17 @@ generate_shell <- function(
   shell = pkgs.mkShell {
     %s
     %s
+    %s
     buildInputs = [ %s %s %s %s system_packages %s %s ];
     %s
   };",
     generate_locale_archive(detect_os()),
     generate_locale_variables(),
+    generate_set_reticulate(py_conf, flag_py_conf),
     flag_git_archive,
     flag_rpkgs,
     flag_tex_pkgs,
-    flag_py_pkgs,
+    flag_py_conf,
     flag_local_r_pkgs,
     flag_wrapper,
     shell_hook
@@ -468,4 +469,18 @@ remove_empty_lines <- function(default.nix) {
   keep <- !(default.nix == "" & c(FALSE, head(default.nix, -1) == ""))
 
   default.nix[keep]
+}
+
+#' generate_set_reticulate Helper to set path to reticulate
+#' @noRd
+generate_set_reticulate <- function(py_conf, flag_py_conf) {
+  if (flag_py_conf == "") {
+    ""
+  } else {
+    py_version <- paste0(
+      "python",
+      gsub("\\.", "", py_conf$py_version)
+    )
+    paste0('RETICULATE_PYTHON = "${pkgs.', py_version, '}/bin/python";\n')
+  }
 }

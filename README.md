@@ -129,15 +129,15 @@ rix(
 ```
 
 It is also possible to add Python packages to an environment, by passing
-a list of two elements to the `py_pkgs` argument of `rix()`. This list
+a list of two elements to the `py_conf` argument of `rix()`. This list
 needs to first specify a Python version, and then an atomic character
 vector of Python packages:
 
 ``` r
 rix(
-  date = "2025-02-17",
+  date = "2025-03-17",
   r_pkgs = "ggplot2",
-  py_pkgs = list(
+  py_conf = list(
     py_version = "3.12", 
     py_pkgs = c("polars", "great-tables")
   ),
@@ -331,7 +331,7 @@ Try Nix inside Docker by following this
 
 ### Docker + {renv}
 
-Docker and {renv} provide robust reproducibility by combining package
+Docker and `{renv}` provide robust reproducibility by combining package
 snapshots with system-level dependencies. However, for long-term
 reproducibility, Nix offers a simpler approach by bundling everything
 (R, packages, and dependencies) in a single environment.
@@ -391,6 +391,13 @@ script, thus generating the project’s `default.nix`. If you need to add
 packages, open the `generate_env.R` file again, modify it, and run it
 again, do not edit the `default.nix` directly. Also, commit all the
 files to version control to avoid any issues.
+
+## Reproducible pipelines using rixpress
+
+`{rix}` is getting a little sister package, `{rixpress}`, which is
+heavily inspired by `{targets}`. If you want to build polyglot data
+science pipelines with the power of Nix, give `{rixpress}` [a
+try](https://github.com/b-rodrigues/rixpress)!
 
 ## Contributing
 

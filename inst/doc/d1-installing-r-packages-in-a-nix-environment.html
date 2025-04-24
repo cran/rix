@@ -525,6 +525,26 @@ in the <code>fusen</code> branch; however the branch name is not
 required, as the commit is enough to pin the exact version of the code
 needed. The <code>{fusen}</code> package is also installed, as of commit
 <code>d617172447d</code>.</p>
+<p>If you want to install a package from GitHub, which store the R
+package in a subfolder, you should specify the subfolder in the
+<code>repo_url</code> argument. For example, if you want to install the
+R version of the package <code>{BPCells}</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.5.0&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;BPCells&quot;</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/bnprks/BPCells/r&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;16faeade0a26b392637217b0caf5d7017c5bdf9b&quot;</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  ),</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">print =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="installing-local-archives" class="section level2">
 <h2>Installing local archives</h2>
@@ -532,11 +552,11 @@ needed. The <code>{fusen}</code> package is also installed, as of commit
 <code>tar.gz</code> file. For this, place the package in the same folder
 where the <code>default.nix</code> will be generated, and write
 something like this:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.3.1&quot;</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">local_r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;chronicler_0.2.1.tar.gz&quot;</span>, <span class="st">&quot;knitr_1.43.tar.gz&quot;</span>),</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.3.1&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">local_r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;chronicler_0.2.1.tar.gz&quot;</span>, <span class="st">&quot;knitr_1.43.tar.gz&quot;</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>)</span></code></pre></div>
 <p>This assumes that both <code>chronicler_0.2.1.tar.gz</code> and
 <code>knitr_1.43.tar.gz</code> have been downloaded beforehand. If you
 want to include a local package that you are developing, make sure to
@@ -548,18 +568,18 @@ instead.</p>
 <div id="installing-python-packages" class="section level2">
 <h2>Installing Python packages</h2>
 <p>It is also possible to add Python packages to an environment, by
-passing a list of two elements to the <code>py_pkgs</code> argument of
+passing a list of two elements to the <code>py_conf</code> argument of
 <code>rix()</code>. This list needs to first specify a Python version,
 and then an atomic character vector of Python packages:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-02-17&quot;</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">py_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">py_version =</span> <span class="st">&quot;3.12&quot;</span>, </span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">py_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;polars&quot;</span>, <span class="st">&quot;great-tables&quot;</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  ),</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-02-17&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">py_conf =</span> <span class="fu">list</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="at">py_version =</span> <span class="st">&quot;3.12&quot;</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>    <span class="at">py_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;polars&quot;</span>, <span class="st">&quot;great-tables&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  ),</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>)</span></code></pre></div>
 <p>This will install Python 3.12, the <code>polars</code> and
 <code>great-tables</code> packages, but also <code>ipykernel</code> and
 <code>pip</code> to ensure the Python interpreter works correctly with
@@ -576,27 +596,27 @@ learn more.</p>
 <h2>A complete example</h2>
 <p>This example shows how to install packages from CRAN, from the CRAN
 archives and from GitHub:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    ),</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    )</span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  ),</span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    ),</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>    )</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  ),</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>#&gt; # This file was generated by the {rix} R package v0.7.1 on 2024-07-01
 #&gt; # with following call:
 #&gt; # &gt;rix(r_ver = &quot;79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a&quot;,

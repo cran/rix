@@ -48,11 +48,12 @@ While Nix has a steep learning curve, `{rix}`
     finally to deploy software environments in production.
 
 <p>
+
 If you want to watch a 5-Minute video introduction, click the image
 below:
 </p>
 
-<a href="https://youtu.be/OOu6gjQ310c?si=MRX0afStyQdVHLiV" target="_blank" rel="noopener noreferrer">
+<a href="https://youtu.be/t4MfjKgqDOc" target="_blank" rel="noopener noreferrer">
 <img src="https://raw.githubusercontent.com/ropensci/rix/refs/heads/main/video_thumbnail.png" alt="Video Thumbnail" style="width:100%; max-width:560px; height:auto; display:block; margin:0 auto;">
 </a>
 
@@ -128,22 +129,35 @@ rix(
 )
 ```
 
-It is also possible to add Python packages to an environment, by passing
-a list of two elements to the `py_conf` argument of `rix()`. This list
-needs to first specify a Python version, and then an atomic character
-vector of Python packages:
+It is also possible to add Python (and Python packages) and/or Julia
+(and Julia packages) to an environment, by passing a list of two
+elements to the `py_conf` argument of `rix()` (or `jl_conf` for Julia).
+This list needs to first specify a Python or Julia version, and then an
+atomic character vector of Python (Julia) packages:
 
 ``` r
 rix(
-  date = "2025-03-17",
+  date = "2025-09-04",
   r_pkgs = "ggplot2",
   py_conf = list(
-    py_version = "3.12", 
+    py_version = "3.12",
     py_pkgs = c("polars", "great-tables")
   ),
+  jl_conf = list(
+    jl_version = "1.10",
+    jl_pkgs = c("Arrow", "TidierData")
+  ),
+  project_path = path_default_nix,
   overwrite = TRUE
 )
 ```
+
+It should be noted that while we offer the guarantee that most CRAN and
+Bioconductor packages are supported and installable through Nix (less
+than 5% of packages aren’t currently supported), the same cannot be said
+about Python or Julia packages. Should you require a Python or Julia but
+cannot successfully bulid the environment, do open an issue and we’ll
+see what we can do.
 
 The table below illustrates this all the different types of environment
 you can generate:
@@ -234,7 +248,9 @@ your best option.
 ## Quick-start for returning users
 
 <details>
+
 <summary>
+
 Click to expand
 </summary>
 
@@ -419,7 +435,7 @@ Hammill](https://github.com/cfhammill), [László
 Kupcsik](https://github.com/Kupac), [Simon
 Lackerbauer](https://github.com/ciil),
 [MrTarantoga](https://github.com/MrTarantoga) and every other person
-from the [Matrix Nixpkgs R channel](https://matrix.to/#/#r:nixos.org)).
+from the Matrix Nixpkgs R channel: `https://matrix.​to/#/%23r:nixos.org`.
 
 Finally, thanks to [David Solito](https://www.davidsolito.com/about/)
 for creating `{rix}`’s logo!
@@ -434,8 +450,6 @@ for creating `{rix}`’s logo!
   environments with Nix](https://www.youtube.com/watch?v=c1LhgeTTxaI)
 - [nix.dev
   tutorials](https://nix.dev/tutorials/first-steps/towards-reproducibility-pinning-nixpkgs#pinning-nixpkgs)
-- [INRIA’s Nix
-  tutorial](https://nix-tutorial.gitlabpages.inria.fr/nix-tutorial/installation.html)
 - [Nix pills](https://nixos.org/guides/nix-pills/)
 - [Nix for Data
   Science](https://github.com/nix-community/nix-data-science)

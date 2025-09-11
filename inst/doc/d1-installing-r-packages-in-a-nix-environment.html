@@ -48,8 +48,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -585,6 +586,116 @@ and then an atomic character vector of Python packages:</p>
 <code>pip</code> to ensure the Python interpreter works correctly with
 IDEs such as Positron.</p>
 </div>
+<div id="installing-python-packages-not-available-via-nixpkgs-impure" class="section level2">
+<h2>Installing Python packages not available via nixpkgs (impure)</h2>
+<p>Not all Python packages can be installed through Nix; unlike CRAN,
+Pypi doesn’t get automatically mirrored and individual packages fixed by
+volunteers. Instead, specific Python packages get packaged individually
+for Nix. Thus, it could very well be the case that a specific Python
+package (or version of a Python package) that you need for a project is
+not available via nixpkgs.</p>
+<p>In this case, it is still possible to use Python-specific package
+managers, like <code>uv</code>, to install packages. This is also useful
+if you work on a project with colleagues that use <code>uv</code> and
+that don’t want (yet) to use Nix. <code>uv</code>, is 10-100x faster
+than <code>pip</code> and also generates a lock file for improved
+reproducibility.</p>
+<p>The idea is to install <code>uv</code> in your shell (but not any
+Python nor Python packages):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  ...</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  ...</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>And then use <code>uv</code> from your shell as you would usually. We
+recommend specifying Python packages in a <code>requirements.txt</code>
+file, and specifying explicit versions (e.g.,
+<code>scanpy==1.11.4</code>). Finally, we also recommend setting a shell
+hook to set up the virtual environment and install the packages from the
+<code>requirements.txt</code> when entering the shell (mind the
+quotes):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  ...</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">shell_hook =</span> <span class="st">&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="st">      if [ ! -f pyproject.toml ]; then</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="st">        uv init --python 3.13.5 # or whichever Python version you need</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="st">      fi</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="st">        uv add --requirements requirements.txt</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="st">      # Create alias so python uses uvs environment</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="st">      alias python=&#39;uv run python&#39;</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="st">  &quot;</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span></code></pre></div>
+<p>After running <code>nix-shell</code>, <code>uv</code> should
+initalize a Python project with the specified Python version and install
+the packages listed in <code>requirements.txt</code> within the nix
+environment. This will take place each time <code>nix-shell</code> is
+called, however this will be cached and not installed each time.</p>
+<p>To make sure everything works fine, you could simply start a Python
+interpreter and try to load <code>numpy</code>. This should work fine,
+but if it doesn’t, the following error could be raised:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">ImportError:</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">IMPORTANT:</span> PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">Importing</span> the numpy C-extensions failed. This error can happen for</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">many</span> reasons, often due to issues with your setup or how NumPy was</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">installed.</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">We</span> have compiled some common reasons and troubleshooting tips at:</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    <span class="ex">https://numpy.org/devdocs/user/troubleshooting-importerror.html</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">Please</span> note and check the following:</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="ex">*</span> The Python version is: Python3.13 from <span class="st">&quot;/home/user/projects/rix_uv/.venv/bin/python3&quot;</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  <span class="ex">*</span> The NumPy version is: <span class="st">&quot;2.2.6&quot;</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">and</span> make sure that they are the versions you expect. Please carefully study the</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">documentation</span> linked above for further help.</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">Original</span> error was: libstdc++.so.6: cannot open shared object file: No such file or directory</span></code></pre></div>
+<p>That is an issue when using <em>wheels</em> (wheels are binaries of
+Python packages that get installed by default using <code>uv</code>).
+These wheels expect certain libraries to be in certain places. One way
+to solve this is to add the following to your shell hook:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>shellHook <span class="ot">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>   <span class="co"># Export LD_LIBRARY is required for python packages that dynamically load libraries, such as numpy </span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>   export LD_LIBRARY_PATH<span class="ot">=</span><span class="st">&quot;${pkgs.lib.makeLibraryPath (with pkgs; [ zlib gcc.cc glibc stdenv.cc.cc ])}&quot;</span><span class="sc">:</span>LD_LIBRARY_PATH;</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>   ...</span></code></pre></div>
+<p>Your environment should now work.</p>
+<p>If this seems complicated: yes, and that is actually exactly the type
+of problems that Nix aims to solve. However, there are just too many
+Python packages to automate their inclusion into nixpkgs like how it’s
+done for R. If you can, prefer using the Python packages included in
+nixpkgs.</p>
+</div>
+<div id="installing-julia-packages" class="section level2">
+<h2>Installing Julia packages</h2>
+<p>Unlike with R packages, date‑specific snapshots of the Julia registry
+only become available starting on the 2025-09-04. If you choose an
+earlier date, Nixpkgs will fall back to whatever registry snapshot was
+bundled at that time—which will be an older version, and it may not
+install successfully. So if you need Julia, use a date after the
+2025-09-04.</p>
+<p>To add Julia packages, you can use the <code>jl_conf</code> argument
+of <code>rix()</code>. This list needs to first specify a Julia version,
+and then an atomic character vector of packages:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-09-04&quot;</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">jl_conf =</span> <span class="fu">list</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">jl_version =</span> <span class="st">&quot;1.11&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">jl_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;TidierData&quot;</span>, <span class="st">&quot;GLM&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  ),</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will install Julia 1.11, the <code>TidierData</code> and
+<code>GLM</code> packages. You can also install the long-term support
+version of Julia by using <code>&quot;lts&quot;</code> as the
+<code>jl_version</code>.</p>
+</div>
 <div id="converting-from-an-renv.lock-file" class="section level2">
 <h2>Converting from an renv.lock file</h2>
 <p><code>{rix}</code> also includes an <code>renv2nix()</code> function
@@ -596,27 +707,27 @@ learn more.</p>
 <h2>A complete example</h2>
 <p>This example shows how to install packages from CRAN, from the CRAN
 archives and from GitHub:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    ),</span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>    )</span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  ),</span>
-<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
-<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    ),</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    )</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>  ),</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>#&gt; # This file was generated by the {rix} R package v0.7.1 on 2024-07-01
 #&gt; # with following call:
 #&gt; # &gt;rix(r_ver = &quot;79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a&quot;,

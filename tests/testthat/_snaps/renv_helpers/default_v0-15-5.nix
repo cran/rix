@@ -170,12 +170,14 @@ let
           purrr;
       };
     });
-     
+      
   system_packages = builtins.attrValues {
     inherit (pkgs) 
       R
       glibcLocales
-      nix;
+      nix
+      pandoc
+      which;
   };
   
   shell = pkgs.mkShell {
@@ -187,7 +189,7 @@ let
     LC_PAPER = "en_US.UTF-8";
     LC_MEASUREMENT = "en_US.UTF-8";
     
-    buildInputs = [ colorblindr colourScaleR rpkgs   system_packages   ];
+    buildInputs = [ colorblindr colourScaleR rpkgs system_packages ];
     
   }; 
 in

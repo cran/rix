@@ -15,14 +15,6 @@ knitr::opts_chunk$set(
 ## ----eval = FALSE-------------------------------------------------------------
 # rix(
 #   date = ...,
-#   r_pkgs = c(...),
-#   ide = "none",
-#   ...
-# )
-
-## ----eval = FALSE-------------------------------------------------------------
-# rix(
-#   date = ...,
 #   r_pkgs = ...,
 #   ide = "code", # or "codium"
 #   ...
@@ -40,7 +32,7 @@ knitr::opts_chunk$set(
 # rix(
 #   date = ...,
 #   r_pkgs = c(...), # whatever packages you need
-#   system_pkgs = "emacs",
+#   ide = "other",
 #   ...
 # )
 
@@ -48,7 +40,7 @@ knitr::opts_chunk$set(
 # rix(
 #   date = ...,
 #   r_pkgs = c(...), # whatever packages you need
-#   ide = "other",
+#   system_pkgs = "emacs",
 #   ...
 # )
 

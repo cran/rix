@@ -27,9 +27,9 @@
 #'   \url{https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=}
 #' @param git_pkgs List. A list of packages to install from Git. See details for
 #'   more information.
-#' @param local_r_pkgs List. A list of local packages to install. These packages
-#'   need to be in the `.tar.gz` or `.zip` formats and must be in the same
-#'   folder as the generated "default.nix" file.
+#' @param local_r_pkgs Vector of characters, paths to local packages to install.
+#'   These packages need to be in the `.tar.gz` or `.zip` formats and must be in
+#'   the same folder as the generated "default.nix" file.
 #' @param tex_pkgs Vector of characters. A set of TeX packages to install. Use
 #'   this if you need to compile `.tex` documents, or build PDF documents using
 #'   Quarto. If you don't know which package to add, start by adding "amsmath".
@@ -38,13 +38,17 @@
 #'   for more details.
 #' @param py_conf List. A list containing two elements: `py_version` and
 #'   `py_pkgs`. `py_version` should be in the form `"3.12"` for Python 3.12, and
-#'   `py_pkgs` should be an atomic vector of package names
-#'   (e.g., `py_pkgs = c("polars", "plotnine", "great-tables")`).
-#'   If Python packages are requested but `{reticulate}` is not in the list of R
-#'   packages, the user will be warned that they may want to add it. When
-#'   `py_conf` packages are requested, the `RETICULATE_PYTHON` environment
-#'   variable is set to ensure the Nix environment does not use with a
-#'   system-wide Python installation.
+#'   `py_pkgs` should be an atomic vector of package names (e.g., `py_pkgs =
+#'   c("polars", "plotnine", "great-tables")`). If Python packages are requested
+#'   but `{reticulate}` is not in the list of R packages, the user will be
+#'   warned that they may want to add it. When `py_conf` packages are requested,
+#'   the `RETICULATE_PYTHON` environment variable is set to ensure the Nix
+#'   environment does not use with a system-wide Python installation.
+#' @param jl_conf List. A list of two elements, `jl_version` and `jl_conf`.
+#'   `jl_version` must be of the form `"1.10"` for Julia 1.10. Leave empty or
+#'   use an empty string to use the latest version, or use `"lts"` for the long
+#'   term support version. `jl_conf` must be an atomic vector of packages names,
+#'   for example `jl_conf = c("TidierData", "TidierPlots")`.
 #' @param ide Character, defaults to "none". If you wish to use RStudio to work
 #'   interactively use "rstudio" or "rserver" for the server version. Use "code"
 #'   for Visual Studio Code or "codium" for Codium, or "positron" for Positron.
@@ -68,8 +72,7 @@
 #'   console.
 #' @param message_type Character. Message type, defaults to `"simple"`, which
 #'   gives minimal but sufficient feedback. Other values are currently
-#'   `"quiet`, which generates the files without message, and `"verbose"`,
-#'   displays all the messages.
+#'   `"quiet`, which generates the files without message, and `"verbose"`, displays all the messages.
 #' @param shell_hook Character of length 1, defaults to `NULL`. Commands added
 #'   to the `shellHook` variable are executed when the Nix shell starts. So by
 #'   default, using `nix-shell default.nix` will start a specific program,
@@ -206,6 +209,7 @@ rix <- function(
   local_r_pkgs = NULL,
   tex_pkgs = NULL,
   py_conf = NULL,
+  jl_conf = NULL,
   ide = "none",
   project_path,
   overwrite = FALSE,
@@ -296,6 +300,13 @@ before continuing."
     )
   }
 
+  if (!is.null(jl_conf) && date < as.Date("2025-09-04")) {
+    warning(
+      "Julia support is only guaranteed from 2025-09-04 onward.",
+      "If environment building fails, try using a later date."
+    )
+  }
+
   # Wrapper attributes to be used later
   attrib <- c(
     radian = "radianWrapper",
@@ -308,7 +319,7 @@ before continuing."
       Sys.info()["sysname"] == "Darwin" &&
       ide == "rstudio" &&
       ((r_ver < "4.4.3" && is.null(date)) ||
-        (is.null(r_ver) && date < "2025-02-28"))
+        (is.null(r_ver) && date < as.Date("2025-02-28")))
   ) {
     warning(
       "Your operating system is detected as macOS, but you selected 'rstudio'
@@ -406,10 +417,19 @@ for more details."
     flag_py_conf <- ""
   }
 
+  if (!is.null(jl_conf)) {
+    flag_jl_conf <- "jlconf"
+  } else {
+    flag_jl_conf <- ""
+  }
+
   # If there are wrapped packages (for example for RStudio), passes the "wrapped_pkgs"
   # to buildInputs
-  flag_wrapper <- if (ide %in% names(attrib) && flag_rpkgs != "")
-    "wrapped_pkgs" else ""
+  flag_wrapper <- if (ide %in% names(attrib) && flag_rpkgs != "") {
+    "wrapped_pkgs"
+  } else {
+    ""
+  }
 
   # Correctly formats shellHook for Nix's mkShell
   shell_hook <- if (!is.null(shell_hook) && nzchar(shell_hook)) {
@@ -434,6 +454,7 @@ for more details."
     ),
     generate_tex_pkgs(tex_pkgs),
     generate_py_conf(py_conf, flag_py_conf),
+    generate_jl_conf(jl_conf, flag_jl_conf),
     generate_local_r_pkgs(local_r_pkgs, flag_local_r_pkgs),
     generate_system_pkgs(system_pkgs, r_pkgs, py_conf, ide),
     generate_wrapped_pkgs(
@@ -449,6 +470,7 @@ for more details."
       flag_tex_pkgs,
       py_conf,
       flag_py_conf,
+      flag_jl_conf,
       flag_local_r_pkgs,
       flag_wrapper,
       shell_hook

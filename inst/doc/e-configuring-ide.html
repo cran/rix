@@ -48,8 +48,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -361,8 +362,9 @@ IDE and Nix environments. To be recommended, a setup should:</p>
 </ul>
 <p>Regardless of your operating system, a general-purpose editor such as
 VS Code (or Codium), Emacs, or Neovim meets the above requirements.
-(Note: Neovim is not covered here due to lack of experience—PRs
-welcome!) However, some editors perform better on certain platforms.</p>
+Recent releases of Positron also work quite well. (Note: Neovim is not
+covered here due to lack of experience—PRs welcome!) However, some
+editors perform better on certain platforms.</p>
 <p>Also, we recommend you uninstall R if it’s installed system-wide and
 also remove your local library of packages and instead only use
 dedicated Nix shells to manage your projects. While we made our possible
@@ -392,15 +394,12 @@ limited to editors that either:</p>
 </ul>
 <p>We recommend to use an editor you can install directly on Windows and
 configure to interact nicely with WSL, and it turns out that this is
-mostly only VS Code (or Codium). There are ways to configure Positron to
-interact with WSL, but it requires significant effort and this is not
-discussed here. See <a href="#configuring-native-vs-codecodium-on-your-operating-system">this
-section</a> to learn how to configure VS Code (or Codium).</p>
-<p>If you want to use RStudio or Positron, this is also possible
-but:</p>
+mostly only VS Code (or Codium) or Positron. See <a href="#configuring-native-vs-codecodium-on-your-operating-system">this
+section</a> to learn how to configure VS Code (or Codium) or
+Positron.</p>
+<p>If you want to use RStudio, this is also possible but:</p>
 <ul>
-<li>RStudio or Positron should ideally be installed with Nix inside
-WSL;</li>
+<li>RStudio should ideally be installed with Nix inside WSL;</li>
 <li>your version of Windows needs to support <a href="https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps">WSLg</a>
 which should be fine on Windows 11 or the very latest Windows 10 builds.
 WSLg allows you to run GUI apps from WSL.</li>
@@ -469,12 +468,27 @@ command in the shell hook to start it immediately as you run
 <code>ide = &quot;rstudio&quot;</code>. Then, build the environment using
 <code>nix-build</code> and drop into the shell using
 <code>nix-shell</code>. Then, type <code>rstudio</code> to start
-RStudio. On Windows, you need to have <code>WSLg</code> enabled, which
-should be the case on the latest versions of Windows. If you wish, you
-can even put the <code>rstudio</code> command in the shell hook to start
-it immediately as you run <code>nix-shell</code>.</p>
-<p>On Linux and WSL, depending on your desktop environment, you might
-see the following error message when trying to launch RStudio:</p>
+RStudio.</p>
+<p>If you plan to use RStudio on Ubuntu, then you need further
+configuration to make it work, because of newly introduced sandboxing
+features in Ubuntu 24.04. You will need to create an RStudio-specific
+AppArmor profile. To do so create this apparmor profile:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">sudo</span> nano /etc/apparmor.d/nix.rstudio</span></code></pre></div>
+<p>Populate it with:</p>
+<pre><code>profile nix.rstudio /nix/store/*-RStudio-*-wrapper/bin/rstudio flags=(unconfined) {
+    userns,
+}</code></pre>
+<p>Save it, load the profile and start RStudio:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">sudo</span> apparmor_parser <span class="at">-r</span> /etc/apparmor.d/nix.rstudio</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apparmor</span></code></pre></div>
+<p>You can now start RStudio from the activated Nix shell.</p>
+<p>On Windows, you need to have <code>WSLg</code> enabled, which should
+be the case on the latest versions of Windows. If you wish, you can even
+put the <code>rstudio</code> command in the shell hook to start it
+immediately as you run <code>nix-shell</code>.</p>
+<p>On Linux and WSL, depending on your desktop environment, and for
+older versions of RStudio, you might see the following error message
+when trying to launch RStudio:</p>
 <pre><code>qt.glx: qglx_findConfig: Failed to finding matching FBConfig for QSurfaceFormat(version 2.0, options QFlags&lt;QSurfaceFormat::FormatOption&gt;(), depthBufferSize -1, redBufferSize 1, greenBufferSize 1, blueBufferSize 1, alphaBufferSize -1, stencilBufferSize -1, samples -1, swapBehavior QSurfaceFormat::SingleBuffer, swapInterval 1, colorSpace QSurfaceFormat::DefaultColorSpace, profile  QSurfaceFormat::NoProfile)
 Could not initialize GLX
 Aborted (core dumped)</code></pre>
@@ -484,16 +498,106 @@ Aborted (core dumped)</code></pre>
 </div>
 <div id="positron" class="section level2">
 <h2>Positron</h2>
+<div id="configuring-native-positron-to-interact-with-nix-shells" class="section level3">
+<h3>Configuring native Positron to interact with Nix shells</h3>
+<p>The same instructions apply whether your host operating system is
+Linux, macOS or Windows. The first step is of course to install Positron
+on your operating system using the usual means of installing
+software.</p>
+<p>If you’re on Windows, install Positron on Windows, not in WSL.
+Positron on Windows is able to interact with WSL seamlessly and before
+continuing here, please follow <a href="https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-vscode">these
+instructions</a> (it’s mostly about installing the right extensions
+after having installed Positron).</p>
+<p>On macOS, start by installing Positron using the official
+<code>.dmg</code> installer. Start Positron, and then the command
+palette using <code>COMMAND-SHIFT-P</code>. In the search bar, type
+<code>&quot;Install &#39;positron&#39; command in PATH&quot;</code> and click on it: this
+will make it possible to start Positron from a terminal.</p>
+<p>Once Positron is installed, you need to install a piece of software
+called <code>direnv</code>: <code>direnv</code> will automatically load
+Nix shells when you open a project that contains a
+<code>default.nix</code> file in an editor. It works on any operating
+system and many editors support it, including Positron. Follow the
+instructions for your operating system <a href="https://direnv.net/docs/installation.html">here</a> but if you’re
+using Windows, install <code>direnv</code> in WSL (even though you’ve
+just installed Positron for Windows), so follow the instructions for
+whatever Linux distribution you’re using there (likely Ubuntu), or use
+Nix to install <code>direnv</code> if you prefer (this is the way I
+recommend to install it on macOS, unless you already use
+<code>brew</code>):</p>
+<pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA direnv</code></pre>
+<p>This will install <code>direnv</code> and make it available even
+outside of Nix shells!</p>
+<p>Then, we highly recommend to install the <code>nix-direnv</code>
+extension:</p>
+<pre><code>nix-env -f &#39;&lt;nixpkgs&gt;&#39; -iA nix-direnv</code></pre>
+<p>It is not mandatory to use <code>nix-direnv</code> if you already
+have <code>direnv</code>, but it’ll make loading environments much
+faster and seamless. Finally, if you haven’t used <code>direnv</code>
+before, don’t forget <a href="https://direnv.net/docs/hook.html">this
+last step</a>.</p>
+<p>Then, in Positron, install the <a href="https://github.com/direnv/direnv-vscode">direnv</a> extension (and
+also the WSL extension if you’re on Windows, as explained in the
+official documentation linked above!). Finally, add a file called
+<code>.envrc</code> and simply write the following two lines in it:</p>
+<pre><code>use nix
+mkdir $TMP</code></pre>
+<p>in it. Now, <em>remotely connect to WSL</em> and open the project’s
+folder using <code>File &gt; Open Folder...</code> and you will see a
+pop-up stating <code>direnv: /PATH/TO/PROJECT/.envrc is blocked</code>
+and a button to allow it. Click <code>Allow</code> and then open an R
+script. You might get another pop-up asking you to restart the
+extension, so click <code>Restart</code>. Be aware that at this point,
+<code>direnv</code> will run <code>nix-shell</code> and so will start
+building the environment. If that particular environment hasn’t been
+built and cached yet, it might take some time before Positron will be
+able to interact with it. You might get yet another popup, this time
+from the R Code extension complaining that R can’t be found. In this
+case, simply restart Code and open the project folder again: now it
+should work every time. For a new project, simply repeat this
+process:</p>
+<ul>
+<li>Generate the project’s <code>default.nix</code> file;</li>
+<li>Build it using <code>nix-build</code>;</li>
+<li>Create an <code>.envrc</code> and write the two lines from above in
+it;</li>
+<li>Open the project’s folder in Code and click allow when
+prompted;</li>
+<li>Restart the extension and Code if necessary.</li>
+</ul>
+<p>Another option is to create the <code>.envrc</code> file and write
+<code>use nix</code> in it, then open a terminal, navigate to the
+project’s folder, and run <code>direnv allow</code>. Doing this before
+opening Positron should not prompt you anymore.</p>
+<p>If you’re on Windows, using Positron like this is particularly
+interesting, because it allows you to install Positron on Windows as
+usual, and then you can configure it to interact with a Nix shell, even
+if it’s running from WSL. This is a very seamless experience.</p>
+</div>
 <div id="letting-nix-manage-positron-on-any-operating-system" class="section level3">
 <h3>Letting Nix manage Positron on any operating system</h3>
 <p>If you want to install Positron with Nix, you need a call that looks
 like this:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;positron&quot;</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  ...</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;positron&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  ...</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>If you plan to use Positron on Ubuntu, then you need further
+configuration to make it work, because of newly introduced sandboxing
+features in Ubuntu 24.04. You will need to create an Positron-specific
+AppArmor profile. To do so create this apparmor profile:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">sudo</span> nano /etc/apparmor.d/nix.positron</span></code></pre></div>
+<p>Populate it with:</p>
+<pre><code>profile nix.positron /nix/store/*-positron-bin-*/bin/positron flags=(unconfined) {
+    userns,
+}</code></pre>
+<p>Save it, load the profile and start Positron:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">sudo</span> apparmor_parser <span class="at">-r</span> /etc/apparmor.d/nix.positron</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apparmor</span></code></pre></div>
+<p>You can now start Positron from the activated Nix shell.</p>
 <p>The advantage of letting Nix handle Positron is that you don’t need
 to configure anything else. Simply build your environment using
 <code>nix-build</code>, then activate the shell using
@@ -509,49 +613,6 @@ different, then a new version will be installed.</p>
 <p>To avoid having different versions of Positron installed on your
 system, you can instead opt for the option where you install a single
 Positron instance on your system and use it with all the Nix shells.</p>
-</div>
-<div id="configuring-positron-installed-on-macos-to-interact-with-nix-shells" class="section level3">
-<h3>Configuring Positron installed on macOS to interact with Nix
-shells</h3>
-<p>If you prefer to use the Positron you have installed system-wide,
-then generate environments by setting <code>ide = &quot;none&quot;</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...),</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  ...</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span></code></pre></div>
-<p>Start by installing Positron using the official <code>.dmg</code>
-installer. Start Positron, and then the command palette using
-<code>COMMAND-SHIFT-P</code>. In the search bar, type
-<code>&quot;Install &#39;positron&#39; command in PATH&quot;</code> and click on it: this
-will make it possible to start Positron from a terminal. Quit Positron
-completely. To use it with a Nix shell, open a terminal and navigate to
-the project’s folder, then activate the shell using
-<code>nix-shell</code> and now start Positron by typing
-<code>positron</code>. In the top right corner of Positron, you will now
-be able to select the R interpreter defined in the Nix shell.</p>
-</div>
-<div id="configuring-positron-installed-on-linux-or-windows-to-interact-with-nix-shells" class="section level3">
-<h3>Configuring Positron installed on Linux or Windows to interact with
-Nix shells</h3>
-<p>On Linux, simply install Positron using the installer (the
-<code>.deb</code> or <code>.rpm</code> package depending on your
-distribution) and on Windows <strong>DO NOT INSTALL</strong> Positron
-using the Windows installer! You need to install Positron in your WSL
-distribution. Assuming your distribution is Ubuntu, download
-<code>.deb</code> package and put it in a folder in your WSL
-distribution, or run the following from line from Ubuntu (change
-Positron’s version to whatever is current):</p>
-<pre><code>wget https://github.com/posit-dev/positron/releases/download/2025.02.0-137/Positron-2025.02.0-137-x64.deb</code></pre>
-<p>then run:</p>
-<pre><code>sudo dpkg -i Positron-2025.02.0-137-x64.deb</code></pre>
-<p>This will install Positron in WSL.</p>
-<p>Then, navigate to your project’s folder and start the Nix shell using
-<code>nix-shell</code> and then Positron by typing
-<code>positron</code>. On Linux, this will start your system-level
-Positron, on Windows, this will start the WSL Positron using WSLg. That
-WSL Positron is available for any Nix shells from WSL.</p>
 </div>
 </div>
 <div id="vs-codecodium" class="section level2">
@@ -577,36 +638,8 @@ distribution), and instead configure it to interact with Nix shells.</p>
 interesting, because it allows you to install Code on Windows as usual,
 and then you can configure it to interact with a Nix shell, even if it’s
 running from WSL. This is a very seamless experience.</p>
-<div id="letting-nix-manage-vs-codecodium" class="section level3">
-<h3>Letting Nix manage VS Code/Codium</h3>
-<p>So, concretely, if you want to install Code with Nix, you need a call
-that looks like this:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> ...,</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;code&quot;</span>, <span class="co"># or &quot;codium&quot;</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  ...</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span></code></pre></div>
-<p>But if you prefer to use the Code you have installed system-wide,
-then you need to add the <code>{languageserver}</code> package and use
-<code>ide = &quot;none&quot;</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;languageserver&quot;</span>, ...), <span class="co"># languageserver is needed</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  ...</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>)</span></code></pre></div>
-<p>The advantage of letting Nix handle Code is that you don’t need to
-configure anything else. Simply build your environment using
-<code>nix-build</code>, then activate the shell using
-<code>nix-shell</code> and run <code>code</code> (for VS Code) or
-<code>codium</code> (for Codium). You can even put the <code>code</code>
-(or <code>codium</code>) command in the shell hook argument to have it
-start as soon as you drop in the development shell using
-<code>nix-shell</code>.</p>
-</div>
-<div id="configuring-native-vs-codecodium-on-your-operating-system" class="section level3">
-<h3>Configuring native VS Code/Codium on your operating system</h3>
+<div id="configuring-native-vs-codecodium-to-interact-with-nix-shells" class="section level3">
+<h3>Configuring native VS Code/Codium to interact with Nix shells</h3>
 <p>The same instructions apply whether your host operating system is
 Linux, macOS or Windows. The first step is of course to install Code on
 your operating system using the usual means of installing software.</p>
@@ -639,63 +672,69 @@ last step</a>.</p>
 <p>Then, in Code, install the <a href="https://github.com/direnv/direnv-vscode">direnv</a> extension (and
 also the WSL extension if you’re on Windows, as explained in the
 official documentation linked above!). Finally, add a file called
-<code>.envrc</code> and simply write <code>use nix</code> in it. Now,
-open the project’s folder using <code>File &gt; Open Folder...</code>
-and you will see a pop-up stating
-<code>direnv: /PATH/TO/PROJECT/.envrc is blocked</code> and a button to
-allow it. Click <code>Allow</code> and then open an R script. You might
-get another pop-up asking you to restart the extension, so click
-<code>Restart</code>. Be aware that at this point, <code>direnv</code>
-will run <code>nix-shell</code> and so will start building the
-environment. If that particular environment hasn’t been built and cached
-yet, it might take some time before Code will be able to interact with
-it. You might get yet another popup, this time from the R Code extension
-complaining that R can’t be found. In this case, simply restart Code and
-open the project folder again: now it should work every time. For a new
-project, simply repeat this process:</p>
+<code>.envrc</code> and simply write the following two lines in it:</p>
+<pre><code>use nix
+mkdir $TMP</code></pre>
+<p>Now, <em>remotely connect to WSL</em> and open the project’s folder
+using <code>File &gt; Open Folder...</code> and you will see a pop-up
+stating <code>direnv: /PATH/TO/PROJECT/.envrc is blocked</code> and a
+button to allow it. Click <code>Allow</code> and then open an R script.
+You might get another pop-up asking you to restart the extension, so
+click <code>Restart</code>. Be aware that at this point,
+<code>direnv</code> will run <code>nix-shell</code> and so will start
+building the environment. If that particular environment hasn’t been
+built and cached yet, it might take some time before Code will be able
+to interact with it. You might get yet another popup, this time from the
+R Code extension complaining that R can’t be found. In this case, simply
+restart Code and open the project folder again: now it should work every
+time. For a new project, simply repeat this process:</p>
 <ul>
 <li>Generate the project’s <code>default.nix</code> file;</li>
 <li>Build it using <code>nix-build</code>;</li>
-<li>Create an <code>.envrc</code> and write <code>use nix</code> in
+<li>Create an <code>.envrc</code> and write the two lines from above in
 it;</li>
 <li>Open the project’s folder in Code and click allow when
 prompted;</li>
 <li>Restart the extension and Code if necessary.</li>
 </ul>
 <p>Another option is to create the <code>.envrc</code> file and write
-<code>use nix</code> in it, then open a terminal, navigate to the
+the two lines from above in it, then open a terminal, navigate to the
 project’s folder, and run <code>direnv allow</code>. Doing this before
 open Code should not prompt you anymore.</p>
+</div>
+<div id="letting-nix-manage-vs-codecodium" class="section level3">
+<h3>Letting Nix manage VS Code/Codium</h3>
+<p>So, concretely, if you want to install Code with Nix, you need a call
+that looks like this:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> ...,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;code&quot;</span>, <span class="co"># or &quot;codium&quot;</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  ...</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>But if you prefer to use the Code you have installed system-wide,
+then you need to add the <code>{languageserver}</code> package and use
+<code>ide = &quot;none&quot;</code>:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;languageserver&quot;</span>, ...), <span class="co"># languageserver is needed</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  ...</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>The advantage of letting Nix handle Code is that you don’t need to
+configure anything else. Simply build your environment using
+<code>nix-build</code>, then activate the shell using
+<code>nix-shell</code> and run <code>code</code> (for VS Code) or
+<code>codium</code> (for Codium). You can even put the <code>code</code>
+(or <code>codium</code>) command in the shell hook argument to have it
+start as soon as you drop in the development shell using
+<code>nix-shell</code>.</p>
 </div>
 </div>
 <div id="emacs" class="section level2">
 <h2>Emacs</h2>
-<div id="letting-nix-manage-emacs" class="section level3">
-<h3>Letting Nix manage Emacs</h3>
-<p>Emacs can be installed through Nix, but is not an option of the
-<code>ide</code> argument. This is because there are several versions of
-Emacs available through Nix (find these versions <a href="https://search.nixos.org/packages?channel=unstable&amp;from=0&amp;size=50&amp;sort=relevance&amp;type=packages&amp;query=emacs">here</a>)
-so install whatever version you want by putting it in
-<code>system_pkgs</code> like so:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;emacs&quot;</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  ...</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>)</span></code></pre></div>
-<p>This doesn’t require any further configuration to use. Simply drop in
-the Nix shell using <code>nix-shell</code> and type <code>emacs</code>.
-You can set the <code>emacs</code> command as the shell hook so Emacs
-starts automatically upon entering the shell. On Windows, if WSLg is
-enabled, it’ll start Emacs from WSL, if not, it’ll start it as a
-terminal application. we recommend using Emacs as a terminal application
-instead of through WSLg, as there is a bug in WSLg that prevents
-modifier keys like <a href="https://github.com/microsoft/wslg/issues/890">AltGr</a> from
-working properly. This is quite problematic with Emacs, so we recommend
-using it in cli mode using <code>emacs -nw</code>.</p>
-</div>
-<div id="configuring-native-emacs-on-your-operating-system" class="section level3">
-<h3>Configuring native Emacs on your operating system</h3>
+<div id="configuring-native-emacs-to-interact-with-nix-shells" class="section level3">
+<h3>Configuring native Emacs to interact with Nix shells</h3>
 <p>You can install Emacs on Linux and macOS and configure it to interact
 with Nix shells. Install Emacs using the usual means of installing
 software on your operating system. On Windows you cannot use the native
@@ -707,12 +746,12 @@ sudo apt install -y emacs</code></pre>
 <p>Because you’re using the Emacs from your operating system, generate
 <code>default.nix</code> shells by setting
 <code>ide = &quot;other&quot;</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  ...</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;other&quot;</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  ...</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>)</span></code></pre></div>
 <p>Then, you need to install a piece of software called
 <code>direnv</code>: <code>direnv</code> will automatically load Nix
 shells when you open a project that contains a <code>default.nix</code>
@@ -736,9 +775,12 @@ faster and seamless. Finally, if you haven’t used <code>direnv</code>
 before, don’t forget <a href="https://direnv.net/docs/hook.html">this
 last step</a>.</p>
 <p>Then install the Emacs <code>direnv</code> <a href="https://github.com/wbolster/emacs-direnv">package</a>. Finally,
-add a file called <code>.envrc</code> and simply write
-<code>use nix</code> in it. Now, open the project’s folder in a terminal
-and type <code>direnv allow</code>. Be aware that at this point,
+add a file called <code>.envrc</code> and simply write the following two
+lines in it:</p>
+<pre><code>use nix
+mkdir $TMP</code></pre>
+<p>Now, open the project’s folder in a terminal and type
+<code>direnv allow</code>. Be aware that at this point,
 <code>direnv</code> will run <code>nix-shell</code> and so will start
 building the environment. If that particular environment hasn’t been
 built and cached yet, it might take some time. Starting Emacs and
@@ -752,11 +794,35 @@ using it in cli mode using <code>emacs -nw</code>.</p>
 <ul>
 <li>Generate the project’s <code>default.nix</code> file;</li>
 <li>Build it using <code>nix-build</code>;</li>
-<li>Create an <code>.envrc</code> and write <code>use nix</code> in
+<li>Create an <code>.envrc</code> and write the two lines from above in
 it;</li>
 <li>Open the project’s folder in a terminal and run
 <code>direnv allow</code>.</li>
 </ul>
+</div>
+<div id="letting-nix-manage-emacs" class="section level3">
+<h3>Letting Nix manage Emacs</h3>
+<p>Emacs can be installed through Nix, but is not an option of the
+<code>ide</code> argument. This is because there are several versions of
+Emacs available through Nix (find these versions <a href="https://search.nixos.org/packages?channel=unstable&amp;from=0&amp;size=50&amp;sort=relevance&amp;type=packages&amp;query=emacs">here</a>)
+so install whatever version you want by putting it in
+<code>system_pkgs</code> like so:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  <span class="at">date =</span> ...,</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(...), <span class="co"># whatever packages you need</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="st">&quot;emacs&quot;</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  ...</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>This doesn’t require any further configuration to use. Simply drop in
+the Nix shell using <code>nix-shell</code> and type <code>emacs</code>.
+You can set the <code>emacs</code> command as the shell hook so Emacs
+starts automatically upon entering the shell. On Windows, if WSLg is
+enabled, it’ll start Emacs from WSL, if not, it’ll start it as a
+terminal application. we recommend using Emacs as a terminal application
+instead of through WSLg, as there is a bug in WSLg that prevents
+modifier keys like <a href="https://github.com/microsoft/wslg/issues/890">AltGr</a> from
+working properly. This is quite problematic with Emacs, so we recommend
+using it in cli mode using <code>emacs -nw</code>.</p>
 </div>
 </div>
 <div id="making-a-launcher-to-start-your-editor" class="section level2">

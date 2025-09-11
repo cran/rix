@@ -48,8 +48,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -353,6 +354,26 @@ it is actually running Linux thanks to WSL2. In practice this means that
 Linux distributions and Windows can be considered one system, and macOS
 another, separate, system, with its own idiosyncrasies. This vignette
 details these.</p>
+<p>Nix on macOS does not have full feature parity with Linux. Because
+macOS relies on proprietary system frameworks and Xcode’s SDKs,
+reproducibility cannot always be guaranteed. For example, many builds
+implicitly depend on the macOS SDK from Xcode; when Apple updates Xcode
+or the system frameworks, a pinned nixpkgs revision that used to build
+may stop working. This kind of “SDK drift” is not an issue on Linux,
+where Nix controls the full dependency graph.</p>
+<p>In practice, this means an environment that worked on macOS may stop
+building after a system update or when using older pinned snapshots. We
+recommend committing the generated <code>default.nix</code> to version
+control and updating the pinned date if you encounter build
+failures.</p>
+<p>As a mitigation, consider setting up your own private binary cache
+(e.g. with Cachix, using <code>ga_cachix()</code>). This allows you to
+reuse builds you know work on your system, avoiding repeated
+recompilation and insulating you somewhat from upstream cache gaps.</p>
+<p>These problems are less common with recent snapshots, as macOS
+support in Nix continues to improve. Still, if you need to work with
+older versions of R (or other software sensitive to system SDK changes),
+you should be aware of this limitation.</p>
 </div>
 <div id="why-rix-and-nix" class="section level2">
 <h2>Why rix <em>and</em> Nix?</h2>
@@ -405,16 +426,18 @@ and from there, generated project-specific expressions and build them.
 But you could also install R using Nix. Running the following line in a
 terminal will drop you in an interactive R session that you can use to
 start generating expressions:</p>
-<pre><code>nix-shell --expr &quot;$(curl -sl https://raw.githubusercontent.com/ropensci/rix/main/inst/extdata/default.nix)&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">nix-shell</span> <span class="at">-p</span> R rPackages.rix</span></code></pre></div>
+<p>or if you prefer the development version of <code>{rix}</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">nix-shell</span> <span class="at">--expr</span> <span class="st">&quot;</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-sl</span> https://raw.githubusercontent.com/ropensci/rix/main/inst/extdata/default.nix<span class="va">)</span><span class="st">&quot;</span></span></code></pre></div>
 <p>After downloading some package, an R session will start inside your
 terminal. You can now run something like this:</p>
-<pre><code>rix(date = &quot;2025-02-03&quot;,
-    r_pkgs = c(&quot;dplyr&quot;, &quot;ggplot2&quot;),
-    system_pkgs = NULL,
-    git_pkgs = NULL,
-    ide = &quot;none&quot;,
-    project_path = &quot;.&quot;,
-    overwrite = TRUE)</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">rix</span>(<span class="at">date =</span> <span class="st">&quot;2025-02-03&quot;</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>to generate a <code>default.nix</code>, and then use that file to
 generate an environment with R, <code>{dplyr}</code> and
 <code>{ggplot2}</code>. If you need to add packages for your project,
@@ -433,10 +456,10 @@ now start building project-specific development environments.</p>
 Windows. Start an R session, and install <code>{rix}</code> if that’s
 not already done. Because <code>{rix}</code> is not yet on CRAN, the
 easiest way is to install it from its r-universe:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>))</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>))</span></code></pre></div>
 <p>You can then use the <code>{rix}</code> package to generate
 expressions. Consult the next vignette
 <code>vignette(&quot;c-using-rix-to-build-project-specific-environments&quot;)</code>

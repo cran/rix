@@ -8,6 +8,8 @@ knitr::opts_chunk$set(
 library(rix)
 
 ## ----eval = F-----------------------------------------------------------------
+# library(rix)
+# 
 # rix(
 #   r_ver = "4.4.2",
 #   r_pkgs = c("dplyr", "ggplot2"),

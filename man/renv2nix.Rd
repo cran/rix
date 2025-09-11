@@ -50,19 +50,27 @@ compared to the package versions. Can also be a date, check
 install that are not R packages such as command line applications for
 example. You can look for available software on the NixOS website
 \url{https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=}}
-    \item{\code{local_r_pkgs}}{List. A list of local packages to install. These packages
-need to be in the \code{.tar.gz} or \code{.zip} formats and must be in the same
-folder as the generated "default.nix" file.}
+    \item{\code{local_r_pkgs}}{Vector of characters, paths to local packages to install.
+These packages need to be in the \code{.tar.gz} or \code{.zip} formats and must be in
+the same folder as the generated "default.nix" file.}
     \item{\code{tex_pkgs}}{Vector of characters. A set of TeX packages to install. Use
 this if you need to compile \code{.tex} documents, or build PDF documents using
 Quarto. If you don't know which package to add, start by adding "amsmath".
 See the
 \code{vignette("d2- installing-system-tools-and-texlive-packages-in-a-nix-environment")}
 for more details.}
-    \item{\code{py_conf}}{List. A list of two elements, \code{py_version} and \code{py_pkgs}.
-\code{py_version} must be of the form \code{"3.12"} for Python 3.12 and \code{py_pkgs}
-must be an atomic vector of packages names, for example
-\code{py_pkgs = c("polars", "plotnine", "great-tables")}.}
+    \item{\code{py_conf}}{List. A list containing two elements: \code{py_version} and
+\code{py_pkgs}. \code{py_version} should be in the form \code{"3.12"} for Python 3.12, and
+\code{py_pkgs} should be an atomic vector of package names (e.g., \code{py_pkgs = c("polars", "plotnine", "great-tables")}). If Python packages are requested
+but \code{{reticulate}} is not in the list of R packages, the user will be
+warned that they may want to add it. When \code{py_conf} packages are requested,
+the \code{RETICULATE_PYTHON} environment variable is set to ensure the Nix
+environment does not use with a system-wide Python installation.}
+    \item{\code{jl_conf}}{List. A list of two elements, \code{jl_version} and \code{jl_conf}.
+\code{jl_version} must be of the form \code{"1.10"} for Julia 1.10. Leave empty or
+use an empty string to use the latest version, or use \code{"lts"} for the long
+term support version. \code{jl_conf} must be an atomic vector of packages names,
+for example \code{jl_conf = c("TidierData", "TidierPlots")}.}
     \item{\code{ide}}{Character, defaults to "none". If you wish to use RStudio to work
 interactively use "rstudio" or "rserver" for the server version. Use "code"
 for Visual Studio Code or "codium" for Codium, or "positron" for Positron.
@@ -82,8 +90,7 @@ section below for more information.}
 console.}
     \item{\code{message_type}}{Character. Message type, defaults to \code{"simple"}, which
 gives minimal but sufficient feedback. Other values are currently
-\verb{"quiet}, which generates the files without message, and \code{"verbose"},
-displays all the messages.}
+\verb{"quiet}, which generates the files without message, and \code{"verbose"}, displays all the messages.}
     \item{\code{shell_hook}}{Character of length 1, defaults to \code{NULL}. Commands added
 to the \code{shellHook} variable are executed when the Nix shell starts. So by
 default, using \verb{nix-shell default.nix} will start a specific program,

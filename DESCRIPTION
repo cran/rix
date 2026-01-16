@@ -1,6 +1,6 @@
 Package: rix
 Title: Reproducible Data Science Environments with 'Nix'
-Version: 0.17.2
+Version: 0.17.4
 Authors@R: c(
     person(given = "Bruno", family = "Rodrigues", email = "bruno@brodrigues.co", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3211-3689")),
@@ -42,9 +42,9 @@ Suggests: knitr, rmarkdown, testthat
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2025-09-11 10:02:29 UTC; brodrigues
+Packaged: 2026-01-16 08:43:56 UTC; brodriguesco
 Author: Bruno Rodrigues [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-3211-3689>),
   Philipp Baumann [aut] (ORCID: <https://orcid.org/0000-0002-3194-8975>),
@@ -62,4 +62,4 @@ Author: Bruno Rodrigues [aut, cre] (ORCID:
   Michael Heming [ctb] (ORCID: <https://orcid.org/0000-0002-9568-2790>)
 Maintainer: Bruno Rodrigues <bruno@brodrigues.co>
 Repository: CRAN
-Date/Publication: 2025-09-11 10:50:20 UTC
+Date/Publication: 2026-01-16 12:50:02 UTC

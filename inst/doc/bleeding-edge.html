@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Understanding the rPackages set release cycle and using bleeding edge packages</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Understanding the rPackages set release
+cycle and using bleeding edge packages</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>It is important to understand the release cycle of the rPackages set
+and what steps you should take if you need bleeding edge packages. R
+packages on <code>nixpkgs</code> tend to get updated alongside a new
+release of R, and the reason is to ensure a certain level of quality.
+The vast majority of CRAN (and Bioconductor) packages are made available
+through <code>nixpkgs</code> in a fully automated way. But some packages
+do require some manual intervention to work on Nix, and we only know
+this if we try to build these packages, but building packages requires
+quite a lot of resources. We can’t build CRAN packages every single day
+to see if everything works well on Nix, so we only rebuild the whole
+tree whenever there’s a new release of R. Packages get built on a CI
+infrastructure called <em>Hydra</em>, and then these packages get cached
+on <a href="https://cache.nixos.org/">cache.nixos.org</a> so whenever
+someone wants to install a package, a pre-built binary gets download
+from the cache. This avoids having to build software from source
+locally. For packages that don’t need compiling this is not that big of
+a time save, but for packages that do need to get compiled it is huge.
+Depending on which packages you want to install, if you had to build
+everything from source, it could potentially take hours, but if you can
+install pre-built binaries it’s just a matter of how quick your Internet
+connection is.</p>
+</div>
+<div id="r-packages-available-through-nix" class="section level2">
+<h2>R packages available through Nix</h2>
+<p>As explained in the introduction, the <em>rPackages</em> set on
+<code>nixpkgs</code> gets updated shortly after a new release of R. The
+process involves first updating the package definitions found <a href="https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/r-modules">here</a>,
+and then building the whole tree on a CI platform called <em>Hydra</em>.
+Build failures then get fixed by volunteers (to learn how you can
+contribute, read the <code>vignette(&quot;contributing-to-nixpkgs&quot;)</code>).
+After the most important packages have been fixed, the whole rPackages
+set gets updated and made available through <code>nixpkgs</code> master
+branch.</p>
+<p>Essentially this means that if you start a project with
+<code>{rix}</code> using <code>&quot;latest-upstream&quot;</code> as the
+<code>r_ver</code> just after the rPackages set got updated, this
+project will use very fresh packages. But if instead you start a project
+just before an R release, then the environment will be using older
+packages. In practice this rarely matters, unless you absolutely need a
+very recent version of a specific package because you need a specific
+feature, or if you need an environment with bleeding edge packages for
+development. For cases like this, we provide the
+<code>r_ver = &quot;bleeding-edge&quot;</code> and
+<code>r_ver = &quot;frozen-edge&quot;</code> options. If you need to test the
+current development version of R, you can use
+<code>r_ver = &quot;r-devel&quot;</code>, and if you need to test the current
+development version of Bioconductor use
+<code>r_ver = &quot;bioc-devel&quot;</code> and if you need both the development
+version of R and Bioconductor use
+<code>r_ver = &quot;r-devel-bioc-devel&quot;</code>. The table below illustrates
+this more clearly:</p>
+<table border="1">
+  <thead>
+    <tr>
+      <th>r_ver or date</th>
+      <th>Intended use</th>
+      <th>State of R version</th>
+      <th>State of CRAN packages</th>
+      <th>State of Bioconductor packages</th>
+      <th>State of other packages in Nixpkgs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>r_ver = &quot;latest-upstream&quot;</td>
+      <td>Start of new project where versions don’t matter</td>
+      <td>Current or previous</td>
+      <td>Outdated (up to 6 months)</td>
+      <td>Outdated (up to 6 months)</td>
+      <td>Current at time of generation</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;4.4.2&quot; (or other)</td>
+      <td>Reproducing old project or starting a new project where versions don’t matter</td>
+      <td>Same as in `r_ver`, check `available_r()`</td>
+      <td>Outdated (up to 2 months if using latest release)</td>
+      <td>Outdated (up to 2 months if using latest release)</td>
+      <td>Potentially outdated (up to 12 months)</td>
+    </tr>
+    <tr>
+      <td>date = &quot;2024-12-14&quot;</td>
+      <td>Reproducing old project or starting a new project using the most recent date</td>
+      <td>Current at that date, check `available_dates()`</td>
+      <td>Current at that date, check `available_dates()`</td>
+      <td>Current at that date, check `available_dates()`</td>
+      <td>Potentially outdated (up to 12 months)</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;bleeding-edge&quot;</td>
+      <td>To develop against the latest release of CRAN</td>
+      <td>Always current</td>
+      <td>Always current</td>
+      <td>Always current</td>
+      <td>Always current</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;frozen-edge&quot;</td>
+      <td>To develop against the latest release of CRAN, but manually manage updates</td>
+      <td>Current at time of generation</td>
+      <td>Current at time of generation</td>
+      <td>Current at time of generation</td>
+      <td>Current at time of generation</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;r-devel&quot;</td>
+      <td>To develop/test against the development version of R</td>
+      <td>Development version</td>
+      <td>Always current</td>
+      <td>Always current</td>
+      <td>Always current</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;r-devel-bioc-devel&quot;</td>
+      <td>To develop/test against the development version of R and Bioconductor</td>
+      <td>Development version</td>
+      <td>Always current</td>
+      <td>Development version</td>
+      <td>Always current</td>
+    </tr>
+    <tr>
+      <td>r_ver = &quot;bioc-devel&quot;</td>
+      <td>To develop/test against the development version of Bioconductor</td>
+      <td>Always current</td>
+      <td>Always current</td>
+      <td>Development version</td>
+      <td>Always current</td>
+    </tr>
+  </tbody>
+</table>
+<p>If you want to benefit from relatively fresh packages and have a
+stable environment that for production purposes, using a date for
+<code>r_ver</code> is your best option.</p>
+</div>
+<div id="using-bleeding-and-frozen-edge-package-for-your-environments" class="section level2">
+<h2>Using bleeding and frozen edge package for your environments</h2>
+<p>CRAN is continuously getting new or updated packages. When you use R
+outside of Nix, running <code>install.packages(pkg)</code> will install
+the latest version of the <code>{pkg}</code> package available from CRAN
+(unless you changed the default repository url). With Nix, packages do
+not get downloaded from CRAN but for the <code>nixpkgs</code> repository
+and they may be outdated as explained above. If you require bleeding
+edge packages, use:</p>
+<ul>
+<li><code>&quot;bleeding-edge&quot;</code> for the very latest packages as
+available currently on CRAN and Bioconductor (there could be a slight
+delay of some hours though): be aware that building this expression will
+always result in a different, updated environment. As such,
+<code>&quot;bleeding-edge&quot;</code> is ideal for running tests against the
+current state of CRAN or Bioconductor on CI for example;</li>
+<li><code>&quot;frozen-edge&quot;</code>, which is the same as
+<code>&quot;bleeding-edge&quot;</code>, but with a pinned revision: in other
+words, building this expression will always result in the same
+environment.</li>
+<li><code>&quot;r-devel&quot;</code>: the same as <code>&quot;bleeding-edge&quot;</code> but
+also with added development version of R. Building this expression will
+also always result in a different, updated environment.</li>
+<li><code>&quot;bioc-devel&quot;</code>: the same as <code>&quot;bleeding-edge&quot;</code>
+but also with added development versions of Bioconductor packages
+instead of the latest release. Building this expression will also always
+result in a different, updated environment.</li>
+<li><code>&quot;r-devel-bioc-devel&quot;</code>: the same as
+<code>&quot;bioc-devel&quot;</code> but also with added development version of R.
+Building this expression will also always result in a different, updated
+environment.</li>
+</ul>
+<p>Just as when you provide a date or an R version to
+<code>rix()</code>, using these options will point to our
+<code>rstats-on-nix</code> fork of <a href="https://github.com/rstats-on-nix/nixpkgs/tree/r-daily">Nixpkgs</a>.
+This fork gets updated every 12 hours with the latest commits from both
+the <code>nixpkgs</code> repository and CRAN. This means that
+environments generated using this fork will contain bleeding packages
+for both the CRAN (and Bioconductor) packages as well as system-level
+dependencies.</p>
+<p>In any case, whatever option you choose, using them comes at a cost
+of which you must be aware.</p>
+<p>First, because these packages are bleeding edge, they have not had
+the chance to be built by <em>Hydra</em> yet. <em>Hydra</em>
+periodically builds packages and these get cached. So if you’re using
+Nix, pre-compiled binaries get used instead of being built from source.
+This is not the case if you use our fork, <strong>unless</strong> you
+also use the cache that we provide, courtesy of <a href="https://app.cachix.org/cache/rstats-on-nix#pull">cachix.org</a>.
+However, we are limited in space, and cannot possible cache all the CRAN
+and Bioconductor packages. So only the most popular packages get built
+and cached, and hopefully the packages you need are part of this limited
+set. To use the cache, run the following commands on your computer.
+First, install the Cachix client (if you followed these instructions
+already when you set up <code>{rix}</code> you can skip them):</p>
+<pre><code>nix-env -iA cachix -f https://cachix.org/api/v1/install</code></pre>
+<p>then use the cache:</p>
+<pre><code>cachix use rstats-on-nix</code></pre>
+<p>that’s it! Packages now not only will get pulled from the official
+cache, but also from the dedicated <code>rstats-on-nix</code> cache. Our
+cache also contains the latest version of R, which sometimes can also
+lag behind on the official <code>nixpkgs</code> repository.</p>
+<p><strong>Determinate Nix users</strong>: If you installed Nix using
+the Determinate Systems installer, run <code>rix::setup_cachix()</code>
+in R instead, and ensure you’ve added yourself to
+<code>trusted-users</code> in <code>/etc/nix/nix.custom.conf</code>. See
+<code>vignette(&quot;setting-up-linux-windows&quot;)</code> for details.</p>
+<p>When building an environment, if you see the following message:</p>
+<pre><code>warning: ignoring the client-specified setting &#39;trusted-substituters&#39;, because it is a restricted setting and you are not a trusted user</code></pre>
+<p>then this means that the cache was not configured properly. Try
+<code>cachix use rstats-on-nix</code> again, and check that the
+<code>/etc/nix/nix.conf</code> file has a line that looks like
+<code>trusted-users = root YOUR_USERNAME</code>. If not, add it using
+admin/root privileges.</p>
+</div>
+<div id="making-your-own-cache" class="section level2">
+<h2>Making your own cache</h2>
+<p>If you need packages that are not included in the
+<code>rstats-on-nix</code> cache, you can very easily roll out your own
+binary cache. Simply build the environment once on one machine, and then
+push the binaries in a cache for re-use. Refer to the vignette
+<code>vignette(&quot;binary-cache&quot;)</code> to learn how to set up your own
+cache.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -62,13 +62,21 @@ See the
 \code{vignette("d2- installing-system-tools-and-texlive-packages-in-a-nix-environment")}
 for more details.}
 
-\item{py_conf}{List. A list containing two elements: \code{py_version} and
-\code{py_pkgs}. \code{py_version} should be in the form \code{"3.12"} for Python 3.12, and
-\code{py_pkgs} should be an atomic vector of package names (e.g., \code{py_pkgs = c("polars", "plotnine", "great-tables")}). If Python packages are requested
-but \code{{reticulate}} is not in the list of R packages, the user will be
-warned that they may want to add it. When \code{py_conf} packages are requested,
-the \code{RETICULATE_PYTHON} environment variable is set to ensure the Nix
-environment does not use with a system-wide Python installation.}
+\item{py_conf}{List. A list containing two or three elements: \code{py_version},
+\code{py_pkgs}, and optionally \code{py_src_dir}. \code{py_version} should be in the form
+\code{"3.12"} for Python 3.12, and \code{py_pkgs} should be an atomic vector of
+package names (e.g., \code{py_pkgs = c("polars", "plotnine", "great-tables")}).
+If Python packages are requested but \code{{reticulate}} is not in the list of R
+packages, the user will be warned that they may want to add it. When
+\code{py_conf} packages are requested, the \code{RETICULATE_PYTHON} environment
+variable is set to ensure the Nix environment does not use a system-wide
+Python installation. If you are developing a Python package, set
+\code{py_src_dir} to the path of your package's source directory (e.g.,
+\code{"mypackage/src"} or just \code{"src"}). This adds \code{PYTHONPATH} to the shell
+hook so your package can be imported without installation. This is the Nix
+equivalent of \verb{pip install -e .} (editable install). Note: if \code{"uv"} is in
+\code{system_pkgs}, \code{LD_LIBRARY_PATH} is automatically configured for dynamic
+library loading (required by packages like numpy).}
 
 \item{jl_conf}{List. A list of two elements, \code{jl_version} and \code{jl_conf}.
 \code{jl_version} must be of the form \code{"1.10"} for Julia 1.10. Leave empty or
@@ -84,7 +92,7 @@ project-specific version of the chosen editor which will be differrent than
 the one already present in your system (if any). For other editors or if
 you want to use an editor already installed on your system (which will
 require some configuration to make it work seamlessly with Nix shells see
-the \code{vignette("e-configuring-ide")} for configuration examples), use
+the \code{vignette("configuring-ide")} for configuration examples), use
 "none". Please be aware that VS Code and Positron are not free software. To
 facilitate their installation, \code{rix()} automatically enables a required
 setting without prompting the user for confirmation. See the "Details"
@@ -159,7 +167,7 @@ have already installed on your system, with the exception of RStudio which
 must be managed by Nix to "see" Nix environments. Positron must also be
 heavily configured to work with Nix shells, so we recommend installing it
 using Nix. To use an editor that you already have installed on your system,
-set \code{ide = "none"} and refer to the \code{vignette("e-configuring-ide")} for
+set \code{ide = "none"} and refer to the \code{vignette("configuring-ide")} for
 more details on how to set up your editor to work with Nix shells.
 
 Packages to install from GitHub or Gitlab must be provided in a list of 3
@@ -194,7 +202,7 @@ repository.
 If GitHub packages have dependencies on GitHub as well, \code{{rix}} will
 attempt to generate the correct expression, but we highly recommend you
 read the
-\code{vignette("z-advanced-topic-handling-packages-with-remote-dependencies")}
+\code{vignette("remote-dependencies")}
 Vignette.
 
 By default, the Nix shell will be configured with \code{"en_US.UTF-8"} for the
@@ -245,3 +253,8 @@ rix(
 )
 }
 }
+\seealso{
+Other core functions: 
+\code{\link{rix_init}()}
+}
+\concept{core functions}

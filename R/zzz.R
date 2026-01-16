@@ -14,28 +14,14 @@ To proceed, install Nix or use a system where it is available."
     )
   }
 
-  nix_conf_path <- "~/.config/nix/nix.conf"
-
-  if (
-    nix_conf_exists(nix_conf_path) &&
-      !is_cachix_configured(readLines(nix_conf_path))
-  ) {
+  # Only show cachix message if Nix is installed but cache is not configured
+  if (nix_build_installed() && !is_cachix_configured_anywhere()) {
     packageStartupMessage(
-      "To speed up the build process of your development environments,
-configure the rstats-on-nix binary repository! Read the `Getting started`
-vignette for instructions see
-https://docs.ropensci.org/rix/articles/a-getting-started.html#installing-and-configuring-nix
-(you only need to do this once per machine you use {rix} on)."
-    )
-  }
-
-  if (!nix_conf_exists(nix_conf_path) && nix_build_installed()) {
-    packageStartupMessage(
-      "To speed up the build process of your development environments,
-configure the rstats-on-nix binary repository! Read the `Getting started`
-vignette for instructions see
-https://docs.ropensci.org/rix/articles/a-getting-started.html#installing-and-configuring-nix
-(you only need to do this once per machine you use {rix} on)."
+      "To speed up builds, configure the rstats-on-nix cache by running:
+  rix::setup_cachix()
+See vignette(\"setting-up-linux-windows\") or
+vignette(\"setting-up-macos\") for full instructions.
+(You only need to do this once per machine.)"
     )
   }
 }

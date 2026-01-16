@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Installing R and Python packages in a Nix environment</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Installing R and Python packages in a Nix
+environment</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>You now know how to declare and build reproducible development
+environments using <code>{rix}</code> and Nix. This vignette will
+explain how to install specific versions of CRAN packages and how to
+install packages from GitHub.</p>
+</div>
+<div id="a-word-of-caution" class="section level2">
+<h2>A word of caution</h2>
+<p>It is important at this stage to understand that you should not call
+<code>install.packages()</code> from a running Nix environment. Doing so
+will raise an error to avoid issues. If you want to add packages while
+analyzing data, you need to add it the <code>default.nix</code>
+expression and rebuild the environment. The same goes for installing
+packages from GitHub; use the method described in this vignette instead
+of using something like <code>remotes::install_github()</code>.</p>
+<p>We recommend you create a script called <code>create_env.R</code> or
+similar, and add the call to <code>rix()</code> there:</p>
+<pre><code>library(rix)
+
+rix(r_ver = &quot;4.4.0&quot;,
+    r_pkgs = c(&quot;dplyr&quot;, &quot;ggplot2&quot;),
+    system_pkgs = NULL,
+    git_pkgs = NULL,
+    ide = &quot;code&quot;,
+    project_path = path_default_nix,
+    overwrite = TRUE,
+    print = TRUE)</code></pre>
+<p>Then, add the packages you need to <code>r_pkgs</code> and run the
+script again. Then, build the environment using <code>nix-build</code>
+again, and drop into it using <code>nix-shell</code>. Calling
+<code>install.packages()</code> is a bad idea for several reasons:</p>
+<ul>
+<li>it goes against the idea of defining an environment in a declarative
+way. If you were able to add packages using
+<code>install.packages()</code>, your environment would end up in a
+state where the <code>default.nix</code> definition of the environment
+and the actual environment don’t match anymore.</li>
+<li>using <code>install.packages()</code> would likely simply not work,
+and if it would work, it would cause issues. For example, if you call
+<code>install.packages(&quot;ggplot2&quot;)</code> from one Nix shell, it will not
+install <code>{ggplot2}</code> “inside” the Nix shell, but will install
+it on your user’s system library of packages. This is because the Nix
+shell cannot be changed at run-time, and so, R will instead install the
+packages in the user’s library. This version of <code>{ggplot2}</code>,
+because it is in that system-wide library of packages, will be available
+to any other Nix shells. If you call
+<code>install.packages(&quot;ggplot2&quot;)</code> again from another Nix shell,
+say 6 months later, this will replace the first version of
+<code>{ggplot2}</code> with the latest version.</li>
+</ul>
+<p>Ideally, you should only manage R versions and R packages using Nix,
+and uninstall any system-managed version of R and R packages. But if you
+do wish to keep a system-managed version of R and R packages,
+<code>rix::rix()</code> also runs <code>rix::rix_init()</code>
+automatically which generates an <code>.Rprofile</code> file that avoids
+any clashes between your global user library and Nix-managed libraries
+of R packages.</p>
+</div>
+<div id="installing-old-packages-archived-on-cran" class="section level2">
+<h2>Installing old packages archived on CRAN</h2>
+<p>It is possible to install an arbitrary version of a package that has
+been archived on CRAN:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr@0.8.0&quot;</span>, <span class="st">&quot;janitor@1.0.0&quot;</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>#&gt; let
+#&gt;  pkgs = import (fetchTarball &quot;https://github.com/NixOS/nixpkgs/archive/79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a.tar.gz&quot;) {};
+#&gt;
+#&gt;   git_archive_pkgs = [
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;dplyr&quot;;
+#&gt;       src = pkgs.fetchzip {
+#&gt;        url = &quot;https://cran.r-project.org/src/contrib/Archive/dplyr/dplyr_0.8.0.tar.gz&quot;;
+#&gt;        sha256 = &quot;sha256-f30raalLd9KoZKZSxeTN71PG6BczXRIiP6g7EZeH09U=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages)
+#&gt;           assertthat
+#&gt;           glue
+#&gt;           magrittr
+#&gt;           pkgconfig
+#&gt;           R6
+#&gt;           Rcpp
+#&gt;           rlang
+#&gt;           tibble
+#&gt;           tidyselect
+#&gt;           BH
+#&gt;           plogr;
+#&gt;       };
+#&gt;     })
+#&gt;
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;janitor&quot;;
+#&gt;       src = pkgs.fetchzip {
+#&gt;        url = &quot;https://cran.r-project.org/src/contrib/Archive/janitor/janitor_1.0.0.tar.gz&quot;;
+#&gt;        sha256 = &quot;sha256-3NJomE/CNbOZ+ohuVZJWe2n1RVGUm8x8a0A0qzLmdN4=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages)
+#&gt;           dplyr
+#&gt;           tidyr
+#&gt;           snakecase
+#&gt;           magrittr
+#&gt;           purrr
+#&gt;           rlang;
+#&gt;       };
+#&gt;     })
+#&gt;   ];
+#&gt;
+#&gt;   system_packages = builtins.attrValues {
+#&gt;     inherit (pkgs)
+#&gt;       R
+#&gt;       glibcLocales
+#&gt;       nix;
+#&gt;   };
+#&gt;
+#&gt; in
+#&gt;
+#&gt; pkgs.mkShell {
+#&gt;   LOCALE_ARCHIVE = if pkgs.system == &quot;x86_64-linux&quot; then  &quot;${pkgs.glibcLocales}/lib/locale/locale-archive&quot; else &quot;&quot;;
+#&gt;   LANG = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_ALL = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_TIME = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MONETARY = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_PAPER = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MEASUREMENT = &quot;en_US.UTF-8&quot;;
+#&gt;
+#&gt;   buildInputs = [ git_archive_pkgs   system_packages   ];
+#&gt;
+#&gt; }</code></pre>
+<p>The above expression will install R version 4.2.1, and
+<code>{dplyr}</code> at version 0.8.0 and <code>{janitor}</code> at
+version 1.0.0. This can be useful, especially for packages that have
+been archived, but otherwise, this feature should ideally be used
+sparingly, for two reasons. First, if you want to reconstruct an
+environment as it was around 2019, use the version of R that was current
+at that time using the <code>date</code> argument in <code>rix()</code>.
+This will ensure that every package that gets installed is at a version
+compatible with that version of R, which might not be the case if you
+need to install a very old version of one particular package. Second,
+doing so will install the package from source. For packages that don’t
+require compilation, this should be fine, but packages that require
+compilation will likely fail to compile successfully. We are working on
+handling this better for future versions of <code>{rix}</code>.</p>
+</div>
+<div id="installing-packages-from-github" class="section level2">
+<h2>Installing packages from GitHub</h2>
+<p>It is also possible to install packages from GitHub:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>    ),</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>    )</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  ),</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will install two packages from GitHub: the
+<code>{housing}</code> package and more specifically the code as it is
+in the <code>fusen</code> branch; however the branch name is not
+required, as the commit is enough to pin the exact version of the code
+needed. The <code>{fusen}</code> package is also installed, as of commit
+<code>d617172447d</code>.</p>
+<p>If you want to install a package from GitHub, which store the R
+package in a subfolder, you should specify the subfolder in the
+<code>repo_url</code> argument. For example, if you want to install the
+R version of the package <code>{BPCells}</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.5.0&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;BPCells&quot;</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/bnprks/BPCells/r&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;16faeade0a26b392637217b0caf5d7017c5bdf9b&quot;</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  ),</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">print =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="installing-local-archives" class="section level2">
+<h2>Installing local archives</h2>
+<p>It is also possible to install packages from a local
+<code>tar.gz</code> file. For this, place the package in the same folder
+where the <code>default.nix</code> will be generated, and write
+something like this:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.3.1&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">local_r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;chronicler_0.2.1.tar.gz&quot;</span>, <span class="st">&quot;knitr_1.43.tar.gz&quot;</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>This assumes that both <code>chronicler_0.2.1.tar.gz</code> and
+<code>knitr_1.43.tar.gz</code> have been downloaded beforehand. If you
+want to include a local package that you are developing, make sure to
+first build it using <code>devtools::build()</code> to build the
+<code>.tar.gz</code> archive, but if you can, consider uploading the
+source code to your package on GitHub and installing it from GitHub
+instead.</p>
+</div>
+<div id="installing-python-packages" class="section level2">
+<h2>Installing Python packages</h2>
+<p>It is also possible to add Python packages to an environment, by
+passing a list of two elements to the <code>py_conf</code> argument of
+<code>rix()</code>. This list needs to first specify a Python version,
+and then an atomic character vector of Python packages:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-02-17&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">py_conf =</span> <span class="fu">list</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="at">py_version =</span> <span class="st">&quot;3.12&quot;</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>    <span class="at">py_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;polars&quot;</span>, <span class="st">&quot;great-tables&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  ),</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will install Python 3.12, the <code>polars</code> and
+<code>great-tables</code> packages, but also <code>ipykernel</code> and
+<code>pip</code> to ensure the Python interpreter works correctly with
+IDEs such as Positron.</p>
+</div>
+<div id="installing-python-packages-not-available-via-nixpkgs-impure" class="section level2">
+<h2>Installing Python packages not available via nixpkgs (impure)</h2>
+<p>Not all Python packages can be installed through Nix; unlike CRAN,
+Pypi doesn’t get automatically mirrored and individual packages fixed by
+volunteers. Instead, specific Python packages get packaged individually
+for Nix. Thus, it could very well be the case that a specific Python
+package (or version of a Python package) that you need for a project is
+not available via nixpkgs.</p>
+<p>In this case, it is still possible to use Python-specific package
+managers, like <code>uv</code>, to install packages. This is also useful
+if you work on a project with colleagues that use <code>uv</code> and
+that don’t want (yet) to use Nix. <code>uv</code>, is 10-100x faster
+than <code>pip</code> and also generates a lock file for improved
+reproducibility.</p>
+<p>The idea is to install <code>uv</code> in your shell (but not any
+Python nor Python packages):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  ...</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  ...</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>And then use <code>uv</code> from your shell as you would usually. We
+recommend specifying Python packages in a <code>requirements.txt</code>
+file, and specifying explicit versions (e.g.,
+<code>scanpy==1.11.4</code>). Finally, we also recommend setting a shell
+hook to set up the virtual environment and install the packages from the
+<code>requirements.txt</code> when entering the shell (mind the
+quotes):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  ...</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">shell_hook =</span> <span class="st">&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="st">      if [ ! -f pyproject.toml ]; then</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="st">        uv init --python 3.13.5 # or whichever Python version you need</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="st">      fi</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="st">        uv add --requirements requirements.txt</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="st">      # Create alias so python uses uvs environment</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="st">      alias python=&#39;uv run python&#39;</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="st">  &quot;</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span></code></pre></div>
+<p>After running <code>nix-shell</code>, <code>uv</code> should
+initalize a Python project with the specified Python version and install
+the packages listed in <code>requirements.txt</code> within the nix
+environment. This will take place each time <code>nix-shell</code> is
+called, however this will be cached and not installed each time.</p>
+<p>To make sure everything works fine, you could simply start a Python
+interpreter and try to load <code>numpy</code>. This should work fine,
+but if it doesn’t, the following error could be raised:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">ImportError:</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">IMPORTANT:</span> PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">Importing</span> the numpy C-extensions failed. This error can happen for</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">many</span> reasons, often due to issues with your setup or how NumPy was</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">installed.</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">We</span> have compiled some common reasons and troubleshooting tips at:</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    <span class="ex">https://numpy.org/devdocs/user/troubleshooting-importerror.html</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">Please</span> note and check the following:</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="ex">*</span> The Python version is: Python3.13 from <span class="st">&quot;/home/user/projects/rix_uv/.venv/bin/python3&quot;</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  <span class="ex">*</span> The NumPy version is: <span class="st">&quot;2.2.6&quot;</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">and</span> make sure that they are the versions you expect. Please carefully study the</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">documentation</span> linked above for further help.</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">Original</span> error was: libstdc++.so.6: cannot open shared object file: No such file or directory</span></code></pre></div>
+<p>That is an issue when using <em>wheels</em> (wheels are binaries of
+Python packages that get installed by default using <code>uv</code>).
+These wheels expect certain libraries to be in certain places. One way
+to solve this is to add the following to your shell hook:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>shellHook <span class="ot">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>   <span class="co"># Export LD_LIBRARY is required for python packages that dynamically load libraries, such as numpy </span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>   export LD_LIBRARY_PATH<span class="ot">=</span><span class="st">&quot;${pkgs.lib.makeLibraryPath (with pkgs; [ zlib gcc.cc glibc stdenv.cc.cc ])}&quot;</span><span class="sc">:</span>LD_LIBRARY_PATH;</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>   ...</span></code></pre></div>
+<p>Your environment should now work.</p>
+<p>If this seems complicated: yes, and that is actually exactly the type
+of problems that Nix aims to solve. However, there are just too many
+Python packages to automate their inclusion into nixpkgs like how it’s
+done for R. If you can, prefer using the Python packages included in
+nixpkgs.</p>
+</div>
+<div id="installing-julia-packages" class="section level2">
+<h2>Installing Julia packages</h2>
+<p>Unlike with R packages, date‑specific snapshots of the Julia registry
+only become available starting on the 2025-09-04. If you choose an
+earlier date, Nixpkgs will fall back to whatever registry snapshot was
+bundled at that time—which will be an older version, and it may not
+install successfully. So if you need Julia, use a date after the
+2025-09-04.</p>
+<p>To add Julia packages, you can use the <code>jl_conf</code> argument
+of <code>rix()</code>. This list needs to first specify a Julia version,
+and then an atomic character vector of packages:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">date =</span> <span class="st">&quot;2025-09-04&quot;</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">jl_conf =</span> <span class="fu">list</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="at">jl_version =</span> <span class="st">&quot;1.11&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="at">jl_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;TidierData&quot;</span>, <span class="st">&quot;GLM&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  ),</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>)</span></code></pre></div>
+<p>This will install Julia 1.11, the <code>TidierData</code> and
+<code>GLM</code> packages. You can also install the long-term support
+version of Julia by using <code>&quot;lts&quot;</code> as the
+<code>jl_version</code>.</p>
+</div>
+<div id="converting-from-an-renv.lock-file" class="section level2">
+<h2>Converting from an renv.lock file</h2>
+<p><code>{rix}</code> also includes an <code>renv2nix()</code> function
+that converts an <code>renv.lock</code> file into a valid Nix
+expression. Read the vignette <code>vignette(&quot;renv2nix&quot;)</code> to learn
+more.</p>
+</div>
+<div id="a-complete-example" class="section level2">
+<h2>A complete example</h2>
+<p>This example shows how to install packages from CRAN, from the CRAN
+archives and from GitHub:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.2.1&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;janitor&quot;</span>, <span class="st">&quot;AER@1.2-8&quot;</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;housing&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/rap4all/housing/&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    ),</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;fusen&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ThinkR-open/fusen&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    )</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>  ),</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>)</span></code></pre></div>
+<pre><code>#&gt; # This file was generated by the {rix} R package v0.7.1 on 2024-07-01
+#&gt; # with following call:
+#&gt; # &gt;rix(r_ver = &quot;79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a&quot;,
+#&gt; #  &gt; r_pkgs = c(&quot;dplyr&quot;,
+#&gt; #  &gt; &quot;janitor&quot;,
+#&gt; #  &gt; &quot;AER@1.2-8&quot;),
+#&gt; #  &gt; git_pkgs = list(list(package_name = &quot;housing&quot;,
+#&gt; #  &gt; repo_url = &quot;https://github.com/rap4all/housing/&quot;,
+#&gt; #  &gt; commit = &quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;),
+#&gt; #  &gt; list(package_name = &quot;fusen&quot;,
+#&gt; #  &gt; repo_url = &quot;https://github.com/ThinkR-open/fusen&quot;,
+#&gt; #  &gt; commit = &quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;)),
+#&gt; #  &gt; ide = &quot;none&quot;,
+#&gt; #  &gt; project_path = path_default_nix,
+#&gt; #  &gt; overwrite = TRUE)
+#&gt; # It uses nixpkgs&#39; revision 79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a for reproducibility purposes
+#&gt; # which will install R version 4.2.1.
+#&gt; # Report any issues to https://github.com/ropensci/rix
+#&gt; let
+#&gt;  pkgs = import (fetchTarball &quot;https://github.com/NixOS/nixpkgs/archive/79b3d4bcae8c7007c9fd51c279a8a67acfa73a2a.tar.gz&quot;) {};
+#&gt;  
+#&gt;   rpkgs = builtins.attrValues {
+#&gt;     inherit (pkgs.rPackages) 
+#&gt;       dplyr
+#&gt;       janitor;
+#&gt;   };
+#&gt;  
+#&gt;   git_archive_pkgs = [
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;housing&quot;;
+#&gt;       src = pkgs.fetchgit {
+#&gt;         url = &quot;https://github.com/rap4all/housing/&quot;;
+#&gt;         rev = &quot;1c860959310b80e67c41f7bbdc3e84cef00df18e&quot;;
+#&gt;         sha256 = &quot;sha256-s4KGtfKQ7hL0sfDhGb4BpBpspfefBN6hf+XlslqyEn4=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages) 
+#&gt;           dplyr
+#&gt;           ggplot2
+#&gt;           janitor
+#&gt;           purrr
+#&gt;           readxl
+#&gt;           rlang
+#&gt;           rvest
+#&gt;           stringr
+#&gt;           tidyr;
+#&gt;       };
+#&gt;     })
+#&gt; 
+#&gt; 
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;fusen&quot;;
+#&gt;       src = pkgs.fetchgit {
+#&gt;         url = &quot;https://github.com/ThinkR-open/fusen&quot;;
+#&gt;         rev = &quot;d617172447d2947efb20ad6a4463742b8a5d79dc&quot;;
+#&gt;         sha256 = &quot;sha256-TOHA1ymLUSgZMYIA1a2yvuv0799svaDOl3zOhNRxcmw=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages) 
+#&gt;           attachment
+#&gt;           cli
+#&gt;           desc
+#&gt;           devtools
+#&gt;           glue
+#&gt;           here
+#&gt;           magrittr
+#&gt;           parsermd
+#&gt;           roxygen2
+#&gt;           stringi
+#&gt;           tibble
+#&gt;           tidyr
+#&gt;           usethis
+#&gt;           yaml;
+#&gt;       };
+#&gt;     })
+#&gt;  
+#&gt;     (pkgs.rPackages.buildRPackage {
+#&gt;       name = &quot;AER&quot;;
+#&gt;       src = pkgs.fetchzip {
+#&gt;        url = &quot;https://cran.r-project.org/src/contrib/Archive/AER/AER_1.2-8.tar.gz&quot;;
+#&gt;        sha256 = &quot;sha256-OqxXcnUX/2C6wfD5fuNayc8OU+mstI3tt4eBVGQZ2S0=&quot;;
+#&gt;       };
+#&gt;       propagatedBuildInputs = builtins.attrValues {
+#&gt;         inherit (pkgs.rPackages) 
+#&gt;           car
+#&gt;           lmtest
+#&gt;           sandwich
+#&gt;           survival
+#&gt;           zoo
+#&gt;           Formula;
+#&gt;       };
+#&gt;     })
+#&gt;   ];
+#&gt;    
+#&gt;   system_packages = builtins.attrValues {
+#&gt;     inherit (pkgs) 
+#&gt;       R
+#&gt;       glibcLocales
+#&gt;       nix;
+#&gt;   };
+#&gt;   
+#&gt; in
+#&gt; 
+#&gt; pkgs.mkShell {
+#&gt;   LOCALE_ARCHIVE = if pkgs.system == &quot;x86_64-linux&quot; then  &quot;${pkgs.glibcLocales}/lib/locale/locale-archive&quot; else &quot;&quot;;
+#&gt;   LANG = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_ALL = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_TIME = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MONETARY = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_PAPER = &quot;en_US.UTF-8&quot;;
+#&gt;    LC_MEASUREMENT = &quot;en_US.UTF-8&quot;;
+#&gt;
+#&gt;   buildInputs = [ git_archive_pkgs rpkgs  system_packages   ];
+#&gt;
+#&gt; }</code></pre>
+<p>The next vignette, <code>vignette(&quot;installing-system-tools&quot;)</code>,
+explains how you can install tools such as text editors, git, Quarto,
+TexLive packages, and any other tool available through
+<code>nixpkgs</code> for your development environments.</p>
+</div>
+<div id="package-installation-issues" class="section level2">
+<h2>Package installation issues</h2>
+<p>Some R packages are quite difficult to install: that is usually not
+an issue for most users that use either Windows or macOS as their
+operating systems, because when calling <code>install.packages()</code>
+a compiled binary gets downloaded from CRAN and installed in a matter of
+seconds. On Ubuntu, likely the most popular Linux distribution, binary
+packages for R packages are also available via the <a href="https://eddelbuettel.github.io/r2u/">r2u</a> repository. However,
+if you need to install old packages, these instead will need to be
+installed from source, as binaries for old packages are not kept. For
+most packages, this is not an issue, but some packages require
+compilation and this is where issues start.</p>
+<p>Nix solves this, because all packages must have their dependencies
+also declared, so installing old packages should not be an issue.
+However, it can happen that one particular package that you want to
+install may not build. This can happen because, even though we spend a
+lot of time making sure R packages work flawlessly with Nix, there are
+many R packages (almost 30’000 between CRAN and Bioconductor) and
+there’s not many of us (R contributors for Nix). Should you have trouble
+installing a package, feel free to open an issue and we’ll do our best
+to fix it!</p>
+<p>We also made sure that old packages would work by backporting many
+fixes, and actually building many old versions of popular packages for
+all the dates included in <code>available_dates()</code>.</p>
+<p>Here is the list of packages that were built and tested (but keep in
+mind that this list doesn’t show all the dependencies of all the
+packages that also have to work, and that just because a package isn’t
+listed, doesn’t mean it’s not going to work!):</p>
+<details>
+<summary>
+Click to show package list
+</summary>
+<pre><code>
+DBI
+
+R6
+
+RColorBrewer
+
+RCurl
+
+RSQLite
+
+Rcpp
+
+RcppEigen
+
+arrow
+
+askpass
+
+backports
+
+base64enc
+
+bit
+
+bit64
+
+blob
+
+broom
+
+bslib
+
+cachem
+
+callr
+
+cellranger
+
+cli
+
+clipr
+
+collapse
+
+colorspace
+
+cpp11
+
+crayon
+
+curl
+
+data_table
+
+dbplyr
+
+devtools
+
+digest
+
+dplyr
+
+duckdb
+
+evaluate
+
+fansi
+
+farver
+
+fastmap
+
+fontawesome
+
+forcats
+
+fs
+
+gargle
+
+generics
+
+ggplot2
+
+glue
+
+gtable
+
+haven
+
+highr
+
+hms
+
+htmltools
+
+htmlwidgets
+
+httr
+
+icosa
+
+igraph
+
+isoband
+
+jquerylib
+
+jsonlite
+
+kit
+
+knitr
+
+labeling
+
+languageserver
+
+later
+
+lifecycle
+
+lubridate
+
+magrittr
+
+memoise
+
+mime
+
+modelr
+
+munsell
+
+nloptr
+
+openssl
+
+openxlsx
+
+pillar
+
+pkgconfig
+
+prettyunits
+
+processx
+
+progress
+
+promises
+
+ps
+
+purrr
+
+rJava
+
+ragg
+
+rappdirs
+
+readr
+
+readxl
+
+rematch
+
+rematch2
+
+rlang
+
+rmarkdown
+
+rprojroot
+
+rstan
+
+rstudioapi
+
+rvest
+
+sass
+
+scales
+
+selectr
+
+Seurat
+
+sf
+
+shiny
+
+stars
+
+stringi
+
+stringr
+
+sys
+
+systemfonts
+
+terra
+
+textshaping
+
+tibble
+
+tidyr
+
+tidyselect
+
+tidyverse
+
+timechange
+
+tinytex
+
+tzdb
+
+utf8
+
+vctrs
+
+viridisLite
+
+withr
+
+xfun
+
+xlsx
+
+xml2
+
+yaml
+
+zoo
+</code></pre>
+</details>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

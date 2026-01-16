@@ -1,3 +1,40 @@
+# rix 0.17.4 (2026-01-15)
+
+- Fix evaluation warning: ‘system’ has been renamed to/replaced by
+  ‘stdenv.hostPlatform.system’`](https://discourse.nixos.org/t/how-to-fix-evaluation-warning-system-has-been-renamed-to-replaced-by-stdenv-hostplatform-system/72120)
+  (https://github.com/ropensci/rix/pull/570)
+
+- `setup_cachix()`: is now the recommended primary approach for configuring the
+  `rstats-on-nix` binary cache. Documentation updated with one-liner commands
+  to add yourself to `trusted-users` on Linux and macOS. Also added NixOS
+  instructions for declarative configuration via `configuration.nix` or Home
+  Manager. This approach works for both standard Nix and Determinate Nix
+  installations.
+
+- `rix()`: Python QoL improvements:
+  - If `"uv"` is in `system_pkgs`, `LD_LIBRARY_PATH` is automatically configured
+    in the shell hook for dynamic library loading (required by packages like
+    numpy that load shared libraries at runtime).
+  - New `py_src_dir` element in `py_conf` for Python package development. Set
+    this to your package's source directory (e.g., `"src"` or `"mypackage/src"`)
+    to add `PYTHONPATH` to the shell hook, enabling editable-install-like
+    behavior in Nix shells.
+
+- Improved startup message detection for cachix configuration: now checks NixOS
+  (skips message if on NixOS), `/etc/nix/nix.conf`, `~/.config/nix/nix.conf`,
+  and `/etc/nix/nix.custom.conf` (Determinate Nix). NixOS users will no longer
+  see the setup_cachix message if they have it configured via `configuration.nix`.
+
+- Documentation reorganization: renamed all vignettes to remove letter prefixes
+  (e.g., `a-getting-started` → `getting-started`), created comprehensive
+  `_pkgdown.yml` with article and function reference groupings, and added
+  `@family` tags to function documentation for improved cross-referencing.
+
+
+# rix 0.17.3 (2025-09-30)
+
+- Fix for issues #544
+
 # rix 0.17.2 (2025-09-11)
 
 - Changed the matrix channel url that was causing a NOTE and added a final

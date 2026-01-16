@@ -36,14 +36,21 @@
 #'   See the
 #'   `vignette("d2- installing-system-tools-and-texlive-packages-in-a-nix-environment")`
 #'   for more details.
-#' @param py_conf List. A list containing two elements: `py_version` and
-#'   `py_pkgs`. `py_version` should be in the form `"3.12"` for Python 3.12, and
-#'   `py_pkgs` should be an atomic vector of package names (e.g., `py_pkgs =
-#'   c("polars", "plotnine", "great-tables")`). If Python packages are requested
-#'   but `{reticulate}` is not in the list of R packages, the user will be
-#'   warned that they may want to add it. When `py_conf` packages are requested,
-#'   the `RETICULATE_PYTHON` environment variable is set to ensure the Nix
-#'   environment does not use with a system-wide Python installation.
+#' @param py_conf List. A list containing two or three elements: `py_version`,
+#'   `py_pkgs`, and optionally `py_src_dir`. `py_version` should be in the form
+#'   `"3.12"` for Python 3.12, and `py_pkgs` should be an atomic vector of
+#'   package names (e.g., `py_pkgs = c("polars", "plotnine", "great-tables")`).
+#'   If Python packages are requested but `{reticulate}` is not in the list of R
+#'   packages, the user will be warned that they may want to add it. When
+#'   `py_conf` packages are requested, the `RETICULATE_PYTHON` environment
+#'   variable is set to ensure the Nix environment does not use a system-wide
+#'   Python installation. If you are developing a Python package, set
+#'   `py_src_dir` to the path of your package's source directory (e.g.,
+#'   `"mypackage/src"` or just `"src"`). This adds `PYTHONPATH` to the shell
+#'   hook so your package can be imported without installation. This is the Nix
+#'   equivalent of `pip install -e .` (editable install). Note: if `"uv"` is in
+#'   `system_pkgs`, `LD_LIBRARY_PATH` is automatically configured for dynamic
+#'   library loading (required by packages like numpy).
 #' @param jl_conf List. A list of two elements, `jl_version` and `jl_conf`.
 #'   `jl_version` must be of the form `"1.10"` for Julia 1.10. Leave empty or
 #'   use an empty string to use the latest version, or use `"lts"` for the long
@@ -57,7 +64,7 @@
 #'   the one already present in your system (if any). For other editors or if
 #'   you want to use an editor already installed on your system (which will
 #'   require some configuration to make it work seamlessly with Nix shells see
-#'   the `vignette("e-configuring-ide")` for configuration examples), use
+#'   the `vignette("configuring-ide")` for configuration examples), use
 #'   "none". Please be aware that VS Code and Positron are not free software. To
 #'   facilitate their installation, `rix()` automatically enables a required
 #'   setting without prompting the user for confirmation. See the "Details"
@@ -113,7 +120,7 @@
 #'   must be managed by Nix to "see" Nix environments. Positron must also be
 #'   heavily configured to work with Nix shells, so we recommend installing it
 #'   using Nix. To use an editor that you already have installed on your system,
-#'   set `ide = "none"` and refer to the `vignette("e-configuring-ide")` for
+#'   set `ide = "none"` and refer to the `vignette("configuring-ide")` for
 #'   more details on how to set up your editor to work with Nix shells.
 #'
 #'   Packages to install from GitHub or Gitlab must be provided in a list of 3
@@ -149,7 +156,7 @@
 #'   If GitHub packages have dependencies on GitHub as well, `{rix}` will
 #'   attempt to generate the correct expression, but we highly recommend you
 #'   read the
-#'   `vignette("z-advanced-topic-handling-packages-with-remote-dependencies")`
+#'   `vignette("remote-dependencies")`
 #'   Vignette.
 #'
 #'   By default, the Nix shell will be configured with `"en_US.UTF-8"` for the
@@ -180,6 +187,7 @@
 #'   the vignette titled
 #'   "z - Advanced topic: Understanding the rPackages set release cycle and
 #'   using bleeding edge packages".
+#' @family core functions
 #' @export
 #' @examples
 #' \dontrun{
@@ -431,9 +439,9 @@ for more details."
     ""
   }
 
-  # Correctly formats shellHook for Nix's mkShell
+  # shell_hook is now processed in generate_shell along with Python-specific hooks
   shell_hook <- if (!is.null(shell_hook) && nzchar(shell_hook)) {
-    paste0('shellHook = "', shell_hook, '";')
+    shell_hook
   } else {
     ""
   }
@@ -473,7 +481,8 @@ for more details."
       flag_jl_conf,
       flag_local_r_pkgs,
       flag_wrapper,
-      shell_hook
+      shell_hook,
+      system_pkgs
     ),
     generate_inherit(),
     collapse = "\n"

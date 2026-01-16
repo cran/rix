@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Setting up and using Nix and rix on Linux and Windows</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Setting up and using Nix and rix on Linux
+and Windows</h1>
+
+
+
+<p><em>This vignette will discuss Linux and Windows-specific topics. If
+you’re not using either of these systems, you can ignore this vignette,
+and read the <code>vignette(&quot;setting-up-macos&quot;)</code> vignette
+instead.</em></p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>When it comes to Nix, there are really only two supported operating
+systems: macOS and Linux distributions. Windows is “supported” because
+it is actually running Linux thanks to WSL2. In practice this means that
+Linux distributions and Windows can be considered one system, and macOS
+another, separate, system. Because Windows is really running Linux under
+the hood thanks to WSL2, this means that WSL2 needs to be running on
+your Windows system before you attempt to install Nix. But it is
+important to know that you can run <code>{rix}</code> even if you don’t
+have Nix installed, which means you can generate Nix expressions, you
+just can’t build them. So if you can’t install Nix on your system, but
+have R already installed, you can skip to the last section of this
+vignette to simply install the <code>{rix}</code> package.</p>
+</div>
+<div id="why-rix-and-nix" class="section level2">
+<h2>Why rix <em>and</em> Nix?</h2>
+<p>You don’t have to install Nix to use <code>{rix}</code>: you can
+generate valid Nix expressions using <code>{rix}</code> even on a system
+where Nix isn’t present. However, this means that you won’t be able to
+build these expressions on that system.</p>
+</div>
+<div id="installing-nix" class="section level2">
+<h2>Installing Nix</h2>
+<div id="windows-pre-requisites" class="section level3">
+<h3>Windows pre-requisites</h3>
+<p>If you are on Windows, you need the Windows Subsystem for Linux 2
+(WSL2) to run Nix. If you are on a recent version of Windows 10 or 11,
+you can simply run this as an administrator in PowerShell:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">wsl</span> <span class="at">--install</span></span></code></pre></div>
+<p>You can find further installation notes at <a href="https://learn.microsoft.com/en-us/windows/wsl/install">this
+official Microsoft documentation</a>.</p>
+<p>We recommend to activate systemd in Ubuntu WSL2, mainly because this
+supports other users than <code>root</code> running Nix. To set this up,
+please do as outlined in <a href="https://learn.microsoft.com/en-us/windows/wsl/systemd#how-to-enable-systemd">the
+official Microsoft WSL documentation</a>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># in WSL2 Ubuntu shell</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-i</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">nano</span> /etc/wsl.conf</span></code></pre></div>
+<p>This will open the <code>/etc/wsl.conf</code> in a nano, a command
+line text editor. Add the following line:</p>
+<pre><code>[boot]
+systemd=true</code></pre>
+<p>Save the file with CTRL-O and then quit nano with CTRL-X. Then, type
+the following line in powershell:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">wsl</span> <span class="at">--shutdown</span></span></code></pre></div>
+<p>and then relaunch WSL (Ubuntu) from the start menu.</p>
+<p>Afterwards, you can install Nix like business as usual. You can
+proceed with the Determinate Systems installer.</p>
+</div>
+<div id="using-the-determinate-systems-installer" class="section level3">
+<h3>Using the Determinate Systems installer</h3>
+<p>You can use <code>{rix}</code> to generate Nix expressions even if
+you don’t have Nix installed on your system, but obviously, you need to
+install Nix if you actually want to build the defined development
+environment and use them.</p>
+<p>Installing (and uninstalling) Nix is quite simple, thanks to the
+installer from <a href="https://determinate.systems/posts/determinate-nix-installer">Determinate
+Systems</a>, a company that provides services and tools built on
+Nix.</p>
+<p>Do not use your operating system’s package manager to install Nix.
+Instead, simply open a terminal and run the following line (on Windows,
+if you cannot or have decided not to activate systemd, then you have to
+append <code>--init none</code> to the command. You can find more
+details about this on <a href="https://github.com/DeterminateSystems/nix-installer">The
+Determinate Nix Installer page</a>):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--proto</span> <span class="st">&#39;=https&#39;</span> <span class="at">--tlsv1.2</span> <span class="at">-sSf</span> <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">-L</span> https://install.determinate.systems/nix <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>     <span class="fu">sh</span> <span class="at">-s</span> <span class="at">--</span> install</span></code></pre></div>
+<p>Then, configure the <code>rstats-on-nix</code> binary cache. This
+will download pre-built binaries of many R packages, significantly
+speeding up the building process. Many thanks to <a href="https://www.cachix.org/">Cachix</a> for sponsoring the
+<code>rstats-on-nix</code> cache!</p>
+</div>
+<div id="recommended-using-setup_cachix" class="section level3">
+<h3>Recommended: Using setup_cachix()</h3>
+<p>The simplest approach is to use <code>{rix}</code>’s
+<code>setup_cachix()</code> function from R. First, start R from a Nix
+shell:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">nix-shell</span> <span class="at">-p</span> R rPackages.rix</span></code></pre></div>
+<p>On first use, this may take a few minutes (up to 5 minutes) as Nix
+downloads R and required packages. Be patient! Subsequent runs will be
+instant.</p>
+<p>Then run:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>rix<span class="sc">::</span><span class="fu">setup_cachix</span>()</span></code></pre></div>
+<p>This configures the cache in <code>~/.config/nix/nix.conf</code>. You
+also need to add yourself as a trusted user so Nix allows you to use the
+cache. Run the following one-liner:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;trusted-users = root </span><span class="va">$USER</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/nix/nix.custom.conf <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> systemctl restart nix-daemon</span></code></pre></div>
+<p>This works for both standard Nix installations and Determinate Nix
+installations. If you see warnings like
+<code>ignoring untrusted substituter</code>, this means the
+trusted-users configuration is not in place.</p>
+</div>
+<div id="alternative-using-the-cachix-client" class="section level3">
+<h3>Alternative: Using the cachix client</h3>
+<p>Alternatively, you can use the <code>cachix</code> command-line
+client:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">nix-env</span> <span class="at">-iA</span> cachix <span class="at">-f</span> https://cachix.org/api/v1/install</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">cachix</span> use rstats-on-nix</span></code></pre></div>
+<p>Note: If you installed Nix using the Determinate Systems installer,
+this approach will not work because <code>/etc/nix/nix.conf</code> is
+protected and restored on restart. Use <code>setup_cachix()</code>
+instead.</p>
+</div>
+<div id="nixos-users" class="section level3">
+<h3>NixOS users</h3>
+<p>If you are using NixOS, the Nix configuration is managed
+declaratively through your system configuration, so
+<code>setup_cachix()</code> and <code>cachix use</code> will not work.
+Instead, add the cache to your <code>configuration.nix</code>:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode nix"><code class="sourceCode nix"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>nix<span class="op">.</span>settings = <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="va">substituters</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="st">&quot;https://cache.nixos.org&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="st">&quot;https://rstats-on-nix.cachix.org&quot;</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="op">];</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="va">trusted-public-keys</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    <span class="st">&quot;cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=&quot;</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    <span class="st">&quot;rstats-on-nix.cachix.org-1:vdiiVgocg6WeJrODIqdprZRUrhi1JzhBnXv7aWI6+F0=&quot;</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="op">];</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="op">}</span>;</span></code></pre></div>
+<p>If you use Home Manager, add this to your home configuration
+instead:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode nix"><code class="sourceCode nix"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>nix<span class="op">.</span>settings = <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="va">substituters</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>    <span class="st">&quot;https://rstats-on-nix.cachix.org&quot;</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="op">];</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="va">trusted-public-keys</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="st">&quot;rstats-on-nix.cachix.org-1:vdiiVgocg6WeJrODIqdprZRUrhi1JzhBnXv7aWI6+F0=&quot;</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="op">];</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="op">}</span>;</span></code></pre></div>
+<p>Then rebuild your system with <code>sudo nixos-rebuild switch</code>
+(or <code>home-manager switch</code> for Home Manager).</p>
+<p>On Linux, once Nix is installed, all the software that will be
+installed through Nix will be saved to the <code>/nix</code> directory
+on the root partition. It is common for Linux users to have a separate
+partition for <code>/</code>, which may be small. Complete development
+environments built with Nix can take up much space, so if the available
+space on your root partition is limited, we advise you to mount the
+<code>/nix</code> folder on another partition with more space (for
+example, a secondary hard drive). For this, edit <code>/etc/fstab</code>
+and add the following line at the end:</p>
+<pre><code>/home/path_to/nix /nix none bind 0 0</code></pre>
+<p>This will map <code>/nix</code> to <code>/home/path_to/nix</code>
+which can be on a larger partition. If you have enough space on your
+root partition, you can ignore the above instructions.</p>
+</div>
+</div>
+<div id="case-1-you-dont-have-r-installed-and-wish-to-install-it-using-nix-as-well" class="section level2">
+<h2>Case 1: you don’t have R installed and wish to install it using Nix
+as well</h2>
+<p>If you have successfully installed Nix, but don’t have yet R
+installed on your system, you could install R as you would usually do on
+your operating system, and then install the <code>{rix}</code> package,
+and from there, generate project-specific expressions and build them.
+But you could also install R using Nix. Running the following line in a
+terminal will drop you in an interactive R session that you can use to
+start generating expressions:</p>
+<pre><code>nix-shell -p R rPackages.rix</code></pre>
+<p>or if you prefer the development version of <code>{rix}</code>:</p>
+<pre><code>nix-shell --expr &quot;$(curl -sl https://raw.githubusercontent.com/ropensci/rix/master/inst/extdata/default.nix)&quot;</code></pre>
+<p>This should immediately start an R session inside your terminal. You
+can now run something like this:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">library</span>(rix)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.4.2&quot;</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>to generate a <code>default.nix</code>, and then use that file to
+generate an environment with R, <code>{dplyr}</code> and
+<code>{ggplot2}</code>. If you need to add packages for your project,
+rerun the command above, but add the needed packages to
+<code>r_pkgs</code>. Beware that if your already have a
+<code>default.nix</code> file in the working directory, running
+<code>rix()</code> with the <code>overwrite = TRUE</code> argument will
+overwrite it! So make sure that you are using a version control system
+for your projects to avoid bad surprises.</p>
+<p>More details about managing project-specific <code>default.nix</code>
+are detailled in the vignette
+<code>vignette(&quot;installing-r-packages&quot;)</code> and
+<code>vignette(&quot;installing-system-tools&quot;)</code>.</p>
+<p>You could also include <code>{rix}</code> in your project-specific
+environments, by generating a <code>default.nix</code> like so:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;rix&quot;</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ropensci/rix&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;76d1bdd03d78589d399b4b9d473ecde616920a82&quot;</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  ),</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>)</span></code></pre></div>
+<p>Change the commit to a more recent one and adapt the
+<code>project_path</code> argument if needed.</p>
+</div>
+<div id="case-2-you-have-r-installed-through-your-oss-package-manager" class="section level2">
+<h2>Case 2: you have R installed through your OS’s package manager</h2>
+<p><em>Note: this package’s authors recommend you only have R versions
+managed by Nix, and not mix a system-wide installation of R with
+Nix-managed R shells.</em></p>
+<p>If you have installed R on your system through the usual means of
+installation (so not with Nix, as described before), you can install the
+<code>{rix}</code> package as usual as well. To install
+<code>{rix}</code>, run:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>)</span></code></pre></div>
+<p>or use r-universe:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>))</span></code></pre></div>
+<p>You can then use the <code>{rix}</code> package to generate
+expressions. Consult the next vignette
+<code>vignette(&quot;project-environments&quot;)</code> to learn more.</p>
+</div>
+<div id="configuring-an-ide" class="section level2">
+<h2>Configuring an IDE</h2>
+<p>We recommend you continue with the next vignettes vignette
+<code>vignette(&quot;installing-r-packages&quot;)</code> and
+<code>vignette(&quot;installing-system-tools&quot;)</code>, and also
+<code>vignette(&quot;configuring-ide&quot;)</code> which will guide you through
+setting you your editor to use Nix shells effectively.</p>
+</div>
+<div id="other-nixes" class="section level2">
+<h2>Other “Nix”es</h2>
+<p>There are several implementations of the Nix package manager that you
+might want to try if you’re feeling adventurous… for now, we recommend
+to stick with Nix.</p>
+<p>You can give <a href="https://lix.systems/install/">Lix</a> a try, or
+<a href="https://tvix.dev/">Tvix</a>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

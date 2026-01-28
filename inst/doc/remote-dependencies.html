@@ -345,13 +345,14 @@ dependencies</h1>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>Packages published on CRAN must have their dependencies on either
-CRAN or Bioconductor, but not on GitHub. However, there are many
-packages available on GitHub that never get published on CRAN, and some
-of these packages may even depend on other packages that are also only
-available on GitHub. <code>{rix}</code> makes it possible to install
-packages from GitHub and if these packages have dependencies that are
-also on GitHub, these also get correctly added to the generated
-<code>default.nix</code>.</p>
+CRAN or Bioconductor, but not on Git hosting platforms. However, there
+are many packages available on GitHub, GitLab, Forgejo, Gitea and other
+Git hosting platforms that never get published on CRAN, and some of
+these packages may even depend on other packages that are also only
+available on these platforms. <code>{rix}</code> makes it possible to
+install packages from these Git hosting platforms, and if these packages
+have dependencies that are also on GitHub, these also get correctly
+added to the generated <code>default.nix</code>.</p>
 <p>There are however certain caveats you should be aware of.</p>
 </div>
 <div id="the-lookup-package" class="section level2">
@@ -502,10 +503,11 @@ in <code>{lookup}</code>’s <code>DESCRIPTION</code> file:</p>
     jimhester/highlite,
     gaborcsardi/gh,
     hadley/memoise</code></pre>
-<p><code>{rix}</code> uses the GitHub API to fetch the commits of these
-remote packages and will attempt to select the commit of the remote
-packages, whose date is closest to (always before, never after) the date
-of the commit provided by the user.</p>
+<p><code>{rix}</code> uses the APIs of supported Git hosting platforms
+(GitHub, GitLab, Forgejo, Gitea) to fetch the commits of these remote
+packages and will attempt to select the commit of the remote packages,
+whose date is closest to (always before, never after) the date of the
+commit provided by the user.</p>
 </div>
 <div id="caveats" class="section level2">
 <h2>Caveats</h2>
@@ -528,19 +530,20 @@ and <code>C</code>, but package <code>B</code> also depends on package
 <code>C</code>. Then this would usually result in a duplicate entry of
 package <code>C</code> in the <code>default.nix</code> file. To avoid
 this, <code>{rix}</code> will cache all packages that have been fetched
-from GitHub and will not fetch them again if they are already in the
-cache. This also avoids unnecessary API calls to GitHub. If you would
-like to disable this feature, you can set
+from Git hosting platforms and will not fetch them again if they are
+already in the cache. This also avoids unnecessary API calls. If you
+would like to disable this feature, you can set
 <code>ignore_remotes_cache = TRUE</code> in the <code>rix()</code> call,
 which might be useful for debugging purposes. Be aware that you need to
 manually remove the duplicates from the <code>default.nix</code> file
 before <code>nix-build</code> will work in this case.</p>
-<p>Unlike with packages hosted on CRAN, packages hosted on GitHub or
-GitLab may incorrectly specify their dependencies. <code>{rix}</code>
-will always try to generate syntactically correct expressions, but if
-dependencies are not correctly specified (for example, if a remote
-dependency got updated in a way that breaks the main package), you will
-need to manually inspect and fix the file.</p>
+<p>Unlike with packages hosted on CRAN, packages hosted on Git platforms
+(GitHub, GitLab, Forgejo, Gitea, etc.) may incorrectly specify their
+dependencies. <code>{rix}</code> will always try to generate
+syntactically correct expressions, but if dependencies are not correctly
+specified (for example, if a remote dependency got updated in a way that
+breaks the main package), you will need to manually inspect and fix the
+file.</p>
 <p>Consider the following scenario: let’s say the commit of package
 <code>A</code> that you specify in the <code>rix()</code> call was
 committed on the 1st of January 2025. Then <code>{rix}</code> will try
@@ -787,16 +790,76 @@ required system-level dependencies to build it. Instead, it is easier to
 install a pre-compiled binary from CRAN).</p>
 </div>
 </div>
+<div id="custom-git-hosting-platforms" class="section level2">
+<h2>Custom Git hosting platforms</h2>
+<p>In addition to GitHub and GitLab, <code>{rix}</code> also supports
+packages hosted on custom Git platforms based on Forgejo, Gitea, cgit,
+and other Git hosting services. The usage is identical to GitHub and
+GitLab — simply provide the full repository URL and commit hash:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>path_default_nix <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>      <span class="at">package_name =</span> <span class="st">&quot;opusreader2&quot;</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>      <span class="at">repo_url =</span> <span class="st">&quot;https://codefloe.com/spectral-cockpit/opusreader2&quot;</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>      <span class="at">commit =</span> <span class="st">&quot;36a9b82835d42c039dc5e202337beb290bba7f85&quot;</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>    )</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  ),</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">project_path =</span> path_default_nix,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>)</span></code></pre></div>
+<p>This example installs a package from a repository hosted on
+codefloe.com, which runs Forgejo. <code>{rix}</code> automatically
+detects the Git hosting platform and constructs the appropriate archive
+download URL. Most Git hosting platforms follow either the GitHub-style
+archive URL format (<code>/archive/&lt;commit&gt;.tar.gz</code>) or the
+GitLab-style format (<code>/-/archive/&lt;commit&gt;.tar.gz</code>), and
+<code>{rix}</code> will use the GitHub-style format by default for
+unknown platforms, which works for most (self-)hosted Git instances.</p>
+<p><strong>Supported Git hosting platforms:</strong></p>
+<p><code>{rix}</code> has full support for the following Git hosting
+platforms, including automatic commit date fetching via their APIs:</p>
+<ul>
+<li><strong>GitHub</strong> (github.com)</li>
+<li><strong>GitLab</strong> (gitlab.com)</li>
+<li><strong>Forgejo</strong> (e.g., codefloe.com, codeberg.org)</li>
+<li><strong>Gitea</strong> (self-hosted instances)</li>
+</ul>
+<p>For other custom Git hosts without standardized APIs,
+<code>{rix}</code> will still attempt to download the package source but
+will use the current date as a fallback for commit dates.</p>
+<p><strong>Important notes:</strong></p>
+<ul>
+<li>Remote dependencies listed in the <code>Remotes</code> field of
+DESCRIPTION files are assumed to be on GitHub. If your package has
+remote dependencies on other platforms, you’ll need to specify them
+manually in the <code>git_pkgs</code> list.</li>
+<li>Make sure the Git hosting platform is publicly accessible, as Nix
+will need to download the source code during the build process.</li>
+<li>When using <code>r_ver = &quot;latest-upstream&quot;</code>, a GitHub Personal
+Access Token (GITHUB_PAT) is recommended to avoid API rate limiting when
+querying the NixOS/nixpkgs repository. Alternatively, use a specific R
+version instead.</li>
+</ul>
+</div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
 <p>In conclusion, <code>{rix}</code> makes it easier to build packages
-from GitHub which have themselves dependencies hosted on GitHub, you
-should however make sure that the expression that is generated uses
-fixed commits instead of <code>HEAD</code> for the packages being built
-from GitHub (if <code>{rix}</code> wasn’t able to automatically fetch
-the right commit for you), and you should also decide if you want to use
-the version of a packages hosted on GitHub instead of the CRAN release.
-These are decisions that <code>{rix}</code> cannot take for you.</p>
+from GitHub, GitLab, Forgejo, Gitea, and other custom Git hosts which
+have themselves dependencies hosted on these platforms.
+<code>{rix}</code> automatically fetches commit dates from supported
+platforms (GitHub, GitLab, Forgejo, Gitea) to ensure reproducible
+builds. You should however make sure that the expression that is
+generated uses fixed commits instead of <code>HEAD</code> for the
+packages being built from Git (if <code>{rix}</code> wasn’t able to
+automatically fetch the right commit for you), and you should also
+decide if you want to use the version of a package hosted on Git instead
+of the CRAN release. These are decisions that <code>{rix}</code> cannot
+take for you.</p>
 </div>
 
 

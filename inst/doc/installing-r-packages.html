@@ -585,6 +585,14 @@ and then an atomic character vector of Python packages:</p>
 <code>great-tables</code> packages, but also <code>ipykernel</code> and
 <code>pip</code> to ensure the Python interpreter works correctly with
 IDEs such as Positron.</p>
+<p>It is also possible to install packages from Git (using
+<code>git_pkgs</code>) or PyPI (using <code>pypi_pkgs</code>, see
+<code>?rix</code>), but there is no guarantee that it will work. This is
+because these packages will be installed from source, which might fail.
+Also, installing from Git or PyPI will <strong>only</strong> work if the
+project uses a <code>pyproject.toml</code> file. If the package you want
+to install uses a <code>setup.py</code> or <code>requirements.txt</code>
+file, it will not work.</p>
 </div>
 <div id="installing-python-packages-not-available-via-nixpkgs-impure" class="section level2">
 <h2>Installing Python packages not available via nixpkgs (impure)</h2>

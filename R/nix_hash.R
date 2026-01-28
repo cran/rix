@@ -9,22 +9,24 @@
 #' - `deps`: list with three elements: 'package', its 'imports' and its 'remotes'
 #' @noRd
 nix_hash <- function(repo_url, commit, ...) {
-  if (grepl("(github)|(gitlab)", repo_url)) {
-    hash_git(repo_url = repo_url, commit, ...)
-  } else if (grepl("cran.*Archive.*", repo_url)) {
+  if (grepl("cran.*Archive.*", repo_url)) {
     hash_cran(repo_url = repo_url)
+  } else if (grepl("^https://", repo_url)) {
+    hash_git(repo_url = repo_url, commit, ...)
   } else {
     stop(
-      "repo_url argument is wrong. Please provide an url to a GitHub repo",
-      "to install a package from GitHub, or to the CRAN Archive to install a",
-      "package from the CRAN archive."
+      "repo_url argument is wrong. Please provide a URL to a Git repository",
+      " (GitHub, GitLab, or other Git https host), or to the CRAN Archive to install a",
+      " package from the CRAN archive."
     )
   }
 }
 
 #' Generate regex patterns for Git hosting platforms
 #'
-#' @param platform Either "github" or "gitlab"
+#' @param platform Either "github", "gitlab", or "git" for custom Git hosting
+#' platforms
+#' @param url String with URL to the repository (required for "git" platform)
 #' @return A list with regex patterns for the given platform:
 #' - `has_subdir_pattern`: Pattern to check if a URL has a subdirectory
 #' - `extract_subdir_pattern`: Pattern to extract the subdirectory from a URL
@@ -32,7 +34,7 @@ nix_hash <- function(repo_url, commit, ...) {
 #' - `repo_url_short_pattern`: Pattern to extract username/repo from archive URLs
 #' - `base_url`: Base URL prefix for constructing repository archive URLs
 #' @noRd
-get_git_regex <- function(platform) {
+get_git_regex <- function(platform, url = NULL) {
   # Define platform-specific parameters
   platforms <- list(
     github = list(
@@ -44,19 +46,44 @@ get_git_regex <- function(platform) {
       name = "gitlab",
       domain = "gitlab\\.com",
       archive_path = "-/archive/"
+    ),
+    git = list(
+      name = "git",
+      domain = NULL, # Will be extracted from URL
+      archive_path = "archive/" # Default to GitHub-style
     )
   )
 
   # Get platform configuration or error if invalid
   if (!platform %in% names(platforms)) {
-    stop("Platform must be 'github' or 'gitlab'", call. = FALSE)
+    stop("Platform must be 'github', 'gitlab', or 'git'", call. = FALSE)
   }
 
   cfg <- platforms[[platform]]
 
+  # For custom Git hosts, extract domain from URL
+  if (platform == "git") {
+    if (is.null(url)) {
+      stop("URL parameter is required for 'git' platform", call. = FALSE)
+    }
+    # Extract domain from URL (e.g., "codefloe.com" from "https://codefloe.com/...")
+    domain_match <- regmatches(
+      url,
+      regexpr("https://([^/]+)", url, perl = TRUE)
+    )
+    domain_raw <- sub("https://", "", domain_match)
+    # Escape dots for regex
+    domain <- gsub("\\.", "\\\\.", domain_raw)
+    # Set domain and base_url
+    cfg$domain <- domain
+    cfg$base_url <- paste0("https://", domain_raw)
+  } else {
+    cfg$base_url <- paste0("https://", cfg$name, ".com")
+  }
+
   # Build base patterns for reuse
   domain <- cfg$domain
-  domain_prefix <- paste0("https://", domain)
+  domain_prefix <- paste0("https://", gsub("\\\\\\.", ".", domain))
   repo_path <- paste0(domain_prefix, "/[^/]+/[^/]+")
 
   # Generate patterns dynamically based on the config
@@ -73,7 +100,7 @@ get_git_regex <- function(platform) {
       domain_prefix,
       "/([^/]+/[^/]+).*"
     ),
-    base_url = paste0("https://", cfg$name, ".com")
+    base_url = cfg$base_url
   )
 }
 
@@ -81,13 +108,20 @@ get_git_regex <- function(platform) {
 #' @param url String with URL ending with `.tar.gz`
 #' @param repo_url URL to GitHub repository, NULL if CRAN archive
 #' @param commit Commit hash, NULL if CRAN archive
+#' @param is_python Logical, if TRUE, we look for a pyproject.toml file
 #' @param ... Further arguments passed down to methods.
 #' @return list with following elements:
 #' - `sri_hash`: string with SRI hash of the NAR serialization of a GitHub repo
 #'      at a given deterministic git commit ID (SHA-1)
 #' - `deps`: list with three elements: 'package', its 'imports' and its 'remotes'
 #' @noRd
-hash_url <- function(url, repo_url = NULL, commit = NULL, ...) {
+hash_url <- function(
+  url,
+  repo_url = NULL,
+  commit = NULL,
+  is_python = FALSE,
+  ...
+) {
   tdir <- tempdir()
 
   tmpdir <- paste0(
@@ -122,28 +156,45 @@ hash_url <- function(url, repo_url = NULL, commit = NULL, ...) {
 
   tar_file <- file.path(path_to_tarfile, "package.tar.gz")
 
-  # Determine platform: github, gitlab,
+  # Determine platform: github, gitlab, or generic git
   if (grepl("github", url)) {
     platform <- "github"
   } else if (grepl("gitlab", url)) {
     platform <- "gitlab"
   } else if (grepl("cran", url)) {
     platform <- "cran"
+  } else if (grepl("pypi.org", url) || grepl("pythonhosted.org", url)) {
+    platform <- "pypi"
+  } else if (grepl("^https://", url) && grepl("archive/.*\\.tar\\.gz$", url)) {
+    # Generic Git host (Forgejo, Gitea, cgit, etc.)
+    platform <- "git"
   } else {
     stop(
-      "repo_url argument should be a URL to a GitHub/GitLab repo or a CRAN archive.\n"
+      "repo_url argument should be a URL to a Git repository ",
+      "(GitHub, GitLab, or other Git host), a CRAN archive, or a PyPI package.\n"
     )
   }
 
   # set the root URL for the download
   root_url <- url
 
-  # if GitHub or GitLab URL with a subdirectory, we need to adjust the root_url
+  # if GitHub, GitLab, or other Git URL with a subdirectory, we need to adjust the root_url
   # because only entire repos can be downloaded)
-  if (platform %in% c("github", "gitlab")) {
+  if (platform %in% c("github", "gitlab", "git")) {
     # Get regex patterns for the platform
-    patterns <- get_git_regex(platform)
-    username_repo <- sub(patterns$repo_url_short_pattern, "\\1", url)
+    # For custom Git hosts, pass the URL to extract domain
+    # Use repo_url if available (from hash_git), otherwise use url
+    url_for_pattern <- if (!is.null(repo_url)) repo_url else url
+    if (platform == "git") {
+      patterns <- get_git_regex(platform, url = url_for_pattern)
+    } else {
+      patterns <- get_git_regex(platform)
+    }
+    username_repo <- sub(
+      patterns$repo_url_short_pattern,
+      "\\1",
+      url_for_pattern
+    )
     has_subdir <- grepl(patterns$has_subdir_pattern, url)
     if (has_subdir) {
       base_repo_url <- paste0(patterns$base_url, "/", username_repo)
@@ -180,8 +231,9 @@ hash_url <- function(url, repo_url = NULL, commit = NULL, ...) {
   # set the path to the r folder containing the DESCRIPTION file
   path_to_r <- path_to_source_root
 
-  # if GitHub or GitLab URL with a subdirectory, we need to adjust the path
-  if (platform %in% c("github", "gitlab") && has_subdir) {
+  # if GitHub, GitLab, or other Git platform URL with a subdirectory, we need to
+  # adjust the path
+  if (platform %in% c("github", "gitlab", "git") && has_subdir) {
     url_subdir <- sub(patterns$extract_subdir_pattern, "\\1", url)
     path_to_r <- file.path(path_to_source_root, url_subdir)
   }
@@ -192,17 +244,64 @@ hash_url <- function(url, repo_url = NULL, commit = NULL, ...) {
     recursive = TRUE
   )
 
-  desc_path <- grep(
-    file.path(path_to_r, "DESCRIPTION"),
-    paths,
-    value = TRUE
-  )
-
-  if (platform == "github") {
-    commit_date <- get_commit_date(username_repo, commit)
+  # For Python/PyPI, we don't have DESCRIPTION, so desc_path might be empty
+  if (isTRUE(is_python)) {
+    desc_path <- NULL
+  } else {
+    desc_path <- grep(
+      file.path(path_to_r, "DESCRIPTION"),
+      paths,
+      value = TRUE
+    )
+    if (length(desc_path) == 0) {
+      desc_path <- NULL
+    }
   }
 
-  deps <- get_imports(desc_path, commit_date, ...)
+  # Check for pyproject.toml if we are in python mode
+  if (isTRUE(is_python)) {
+    pyproject_path <- grep(
+      file.path(path_to_r, "pyproject.toml"),
+      paths,
+      value = TRUE
+    )
+    if (length(pyproject_path) > 0) {
+      # Check if it's the root pyproject.toml
+      # We prefer the one at the root
+      pyproject_path <- pyproject_path[which.min(nchar(pyproject_path))]
+    } else {
+      stop(
+        "Python packages from GitHub and PyPI are only available if they use pyproject.toml"
+      )
+    }
+  } else {
+    pyproject_path <- NULL
+  }
+
+  if (platform == "github") {
+    commit_date <- get_commit_date(username_repo, commit, platform = "github")
+  } else if (platform == "gitlab") {
+    commit_date <- get_commit_date(username_repo, commit, platform = "gitlab")
+  } else if (platform == "git") {
+    # For Forgejo/Gitea platforms, use their API
+    commit_date <- get_commit_date(
+      username_repo,
+      commit,
+      platform = "git",
+      base_url = patterns$base_url
+    )
+  } else {
+    # For other platforms without API support, use current date as fallback
+    commit_date <- Sys.Date()
+  }
+
+  if (!is.null(desc_path)) {
+    deps <- get_imports(desc_path, commit_date, ...)
+  } else if (!is.null(pyproject_path) && length(pyproject_path) > 0) {
+    deps <- get_py_imports(pyproject_path)
+  } else {
+    deps <- list(package = NULL, imports = NULL, remotes = NULL)
+  }
 
   return(
     list(
@@ -318,6 +417,10 @@ hash_git <- function(repo_url, commit, ...) {
     url <- paste0(repo_url, slash, "archive/", commit, ".tar.gz")
   } else if (grepl("gitlab", repo_url)) {
     url <- paste0(repo_url, slash, "-/archive/", commit, ".tar.gz")
+  } else {
+    # For other Git hosts (Forgejo, Gitea, cgit, etc.), try GitHub-style first
+    # as it's the most common pattern
+    url <- paste0(repo_url, slash, "archive/", commit, ".tar.gz")
   }
   # list contains `sri_hash` and `deps` elements
   hash_url(url, repo_url, commit, ...)
@@ -348,4 +451,70 @@ try_download <- function(
       )
     }
   )
+}
+
+#' Finds dependencies of a Python package from pyproject.toml
+#' @param path path to pyproject.toml
+#' @return List with imports
+#' @noRd
+get_py_imports <- function(path) {
+  lines <- readLines(path)
+
+  # Simple parser for [project] dependencies
+  # We look for "dependencies = [" and then read until "]"
+
+  # Find start of dependencies
+  start_idx <- grep("^dependencies\\s*=\\s*\\[", lines)
+
+  if (length(start_idx) == 0) {
+    return(list(package = NULL, imports = NULL, remotes = NULL))
+  }
+
+  # Use the first occurrence (usually under [project])
+  start_idx <- start_idx[1]
+
+  # Collect lines until we find the closing bracket
+  deps_content <- lines[start_idx]
+  curr_idx <- start_idx
+
+  while (!grepl("\\]", lines[curr_idx]) && curr_idx < length(lines)) {
+    curr_idx <- curr_idx + 1
+    deps_content <- paste(deps_content, lines[curr_idx])
+  }
+
+  # Extract strings inside the list
+  # Remove "dependencies =" part
+  deps_content <- sub("^dependencies\\s*=\\s*", "", deps_content)
+
+  # Remove brackets
+  deps_content <- gsub("\\[|\\]", "", deps_content)
+
+  # Split by comma
+  deps <- strsplit(deps_content, ",")[[1]]
+
+  # Clean up: remove quotes and whitespace
+  deps <- gsub("[\"']", "", deps)
+
+  # Remove comments if any (e.g. "package # comment")
+  deps <- sub("#.*", "", deps)
+
+  deps <- trimws(deps)
+
+  # Remove empty strings
+  deps <- deps[deps != ""]
+
+  # Handle version specifiers (e.g. "numpy>=1.20")
+  # We just want the package name for Nix (usually)
+  # But Nix python packages often align with PyPI names.
+  # We just need the names to look them up in pkgs.python3packages
+
+  # Basic extraction of name (everything before >=, ==, <, >, etc., but also space)
+  # Some might be "package ; sys_platform..."
+  deps <- sub("([a-zA-Z0-9_.-]+).*", "\\1", deps)
+
+  return(list(
+    package = NULL, # We could extract name from pyproject.toml too if needed
+    imports = deps,
+    remotes = NULL
+  ))
 }

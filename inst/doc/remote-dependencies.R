@@ -25,3 +25,21 @@ library(rix)
 #   print = TRUE
 # )
 
+## ----eval = F-----------------------------------------------------------------
+# path_default_nix <- tempdir()
+# 
+# rix(
+#   r_ver = "latest-upstream",
+#   r_pkgs = c("dplyr"),
+#   git_pkgs = list(
+#     list(
+#       package_name = "opusreader2",
+#       repo_url = "https://codefloe.com/spectral-cockpit/opusreader2",
+#       commit = "36a9b82835d42c039dc5e202337beb290bba7f85"
+#     )
+#   ),
+#   ide = "none",
+#   project_path = path_default_nix,
+#   overwrite = TRUE
+# )
+

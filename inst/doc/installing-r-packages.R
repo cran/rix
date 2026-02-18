@@ -169,6 +169,18 @@ library(rix)
 
 ## ----eval = F-----------------------------------------------------------------
 # rix(
+#   r_ver = "4.4.1",
+#   git_pkgs = list(
+#     package_name = "myPrivatePkg",
+#     repo_url = "git@github.com:myorg/private-repo.git",
+#     commit = "abc123def456",
+#     private = TRUE
+#   ),
+#   overwrite = TRUE
+# )
+
+## ----eval = F-----------------------------------------------------------------
+# rix(
 #   date = "2025-02-17",
 #   r_pkgs = "ggplot2",
 #   py_conf = list(

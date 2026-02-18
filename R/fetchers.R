@@ -10,7 +10,19 @@ fetchgit <- function(git_pkg, ...) {
   package_name <- git_pkg$package_name
   repo_url <- git_pkg$repo_url
   commit <- git_pkg$commit
-  output <- nix_hash(repo_url, commit, ...)
+  private <- if (is.null(git_pkg$private)) FALSE else git_pkg$private
+  
+  # For private repos with SSH URLs, convert to HTTPS for hash calculation
+  # but keep original SSH URL for Nix expression generation
+  if (isTRUE(private) && grepl("^git@", repo_url)) {
+    # Convert git@github.com:user/repo.git to https://github.com/user/repo
+    hash_url <- sub("^git@([^:]+):(.*)$", "https://\\1/\\2", repo_url)
+    hash_url <- sub("\\.git$", "", hash_url)
+  } else {
+    hash_url <- repo_url
+  }
+  
+  output <- nix_hash(hash_url, commit, ...)
   sri_hash <- output$sri_hash
 
   # If package has no remote dependencies
@@ -25,7 +37,8 @@ fetchgit <- function(git_pkg, ...) {
     commit,
     sri_hash,
     imports,
-    remotes
+    remotes,
+    private
   )
 
   if (is.list(remotes) && length(remotes) == 0) {
@@ -52,8 +65,12 @@ fetchgit <- function(git_pkg, ...) {
 #' @param repo_url A character, Git repo url.
 #' @param commit A character, Git commit.
 #' @param sri_hash A character, hash of Git repo.
-#' @param imports A list of pcakages, can be empty list
+#' @param imports A list of packages, can be empty list
 #' @param remotes A list of remotes dependencies, can be empty list
+#' @param private Logical, if TRUE use builtins.fetchGit for private repos (uses SSH).
+#'   When TRUE, requires SSH repo URLs and uses them with builtins.fetchGit; SSH URLs
+#'   are temporarily converted to HTTPS only for hash calculation, while the Nix
+#'   expression continues to use the original SSH URL and skips the sha256 requirement.
 #' @return A character. Part of the Nix definition to download and build the R package
 #' from the CRAN archives.
 #' @noRd
@@ -63,7 +80,8 @@ generate_git_nix_expression <- function(
   commit,
   sri_hash,
   imports,
-  remotes = NULL
+  remotes = NULL,
+  private = FALSE
 ) {
   # If there are remote dependencies, pass this string
   flag_remote_deps <- if (is.list(remotes) && length(remotes) == 0) {
@@ -78,28 +96,76 @@ generate_git_nix_expression <- function(
     paste0(" ++ [ ", paste0(remote_pkgs_names, collapse = " "), " ]")
   }
 
-  sprintf(
-    '
+  # Generate Nix expression based on whether it's a private repo
+  if (isTRUE(private)) {
+    # For private repos, use builtins.fetchGit with SSH URL
+    # Validate that SSH URL is provided
+    if (grepl("^https://", repo_url)) {
+      stop(
+        "Private repositories require SSH URLs.\n",
+        "Please provide the repository URL in SSH format (e.g., 'git@github.com:user/repo.git') ",
+        "instead of HTTPS ('", repo_url, "').",
+        call. = FALSE
+      )
+    }
+    
+    # Display warning about tradeoffs
+    warning(
+      "Package '", package_name, "' is configured as private and will use builtins.fetchGit.\n",
+      "Tradeoffs:\n",
+      "  - PRO: Works seamlessly with your SSH keys for private repositories\n",
+      "  - CON: Cannot be cached in Nix binary caches (less reproducible)\n",
+      "  - CON: Requires SSH keys to be available during evaluation\n",
+      "  - CON: May not work in pure Nix evaluation mode or some CI/CD environments\n",
+      "Consider making the repository public if you need reproducible builds in CI/CD.",
+      call. = FALSE
+    )
+    
+    sprintf(
+      '
     %s = (pkgs.rPackages.buildRPackage {
-      name = \"%s\";
-      src = pkgs.fetchgit {
-        url = \"%s\";
-        rev = \"%s\";
-        sha256 = \"%s\";
+      name = "%s";
+      src = builtins.fetchGit {
+        url = "%s";
+        rev = "%s";
       };
       propagatedBuildInputs = builtins.attrValues {
         inherit (pkgs.rPackages) %s;
       }%s;
     });
 ',
-    package_name,
-    package_name,
-    repo_url,
-    commit,
-    sri_hash,
-    imports,
-    flag_remote_deps
-  )
+      package_name,
+      package_name,
+      repo_url,
+      commit,
+      imports,
+      flag_remote_deps
+    )
+  } else {
+    # For public repos, use pkgs.fetchgit with sha256
+    sprintf(
+      '
+    %s = (pkgs.rPackages.buildRPackage {
+      name = "%s";
+      src = pkgs.fetchgit {
+        url = "%s";
+        rev = "%s";
+        sha256 = "%s";
+      };
+      propagatedBuildInputs = builtins.attrValues {
+        inherit (pkgs.rPackages) %s;
+      }%s;
+    });
+',
+      package_name,
+      package_name,
+      repo_url,
+      commit,
+      sri_hash,
+      imports,
+      flag_remote_deps
+    )
+  }
 }
 
 
@@ -154,7 +220,7 @@ fetchzip <- function(archive_pkg, sri_hash = NULL) {
 }
 
 
-#' Removes base packages from list of packages dependencies
+#' Removes Base Packages from List of Packages Dependencies
 #' @param list_imports Atomic vector of packages
 #' @importFrom stats na.omit
 #' @return Atomic vector of packages without base packages
@@ -174,7 +240,7 @@ remove_base <- function(list_imports) {
 }
 
 
-#' Finds dependencies of a package from the DESCRIPTION file
+#' Finds Dependencies of a Package from the DESCRIPTION File
 #' @param path path to package
 #' @param commit_date date of commit
 #' @param ... Further arguments passed down to methods.
@@ -246,18 +312,7 @@ get_imports <- function(path, commit_date, ...) {
     # Process remotes - handle both short format (username/repo) and full URLs
     urls <- vapply(
       remotes,
-      function(remote) {
-        # Check if this is already a full URL
-        if (grepl("^https://", remote)) {
-          # Extract the URL without the @commit part
-          url_parts <- strsplit(remote, "@")[[1]]
-          return(url_parts[1])
-        } else {
-          # Short format like "username/repo" - assume GitHub
-          parts <- strsplit(remote, "@")[[1]]
-          return(paste0("https://github.com/", parts[1]))
-        }
-      },
+      normalize_git_url,
       character(1)
     )
 
@@ -575,7 +630,7 @@ fetchpkgs <- function(git_pkgs, archive_pkgs, ...) {
 }
 
 
-#' get_commit_date Retrieves the date of a commit from a Git repository
+#' Fetch a Package from a Git Repository
 #' @param repo The repository (e.g. "r-lib/usethis" or "owner/repo")
 #' @param commit_sha The commit hash of interest
 #' @param platform Platform type: "github", "gitlab", or "git" (Forgejo/Gitea)
@@ -620,20 +675,7 @@ get_commit_date <- function(
 
   # Only use GitHub token for GitHub
   if (platform == "github") {
-    token <- Sys.getenv("GITHUB_PAT")
-    token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
-
-    if (grepl(token_pattern, token)) {
-      handle_setheaders(h, Authorization = paste("token", token))
-    } else {
-      message(
-        paste0(
-          "When fetching the commit date from GitHub from <<< ",
-          repo,
-          " >>>, no GitHub Personal Access Token found.\nPlease set GITHUB_PAT in your environment.\nFalling back to unauthenticated API request.\n"
-        )
-      )
-    }
+    check_github_pat(h, repo)
   }
 
   tryCatch(
@@ -694,20 +736,7 @@ download_all_commits <- function(repo, date) {
   base_url <- paste0("https://api.github.com/repos/", repo, "/commits")
   h <- new_handle()
 
-  token <- Sys.getenv("GITHUB_PAT")
-  token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
-
-  if (grepl(token_pattern, token)) {
-    handle_setheaders(h, Authorization = paste("token", token))
-  } else {
-    message(
-      paste0(
-        "When downloading commits from <<< ",
-        repo,
-        " >>>, no GitHub Personal Access Token found.\nPlease set GITHUB_PAT in your environment.\nFalling back to unauthenticated API request.\n"
-      )
-    )
-  }
+  check_github_pat(h, repo, context = "downloading commits")
   # Limit to 10 pages of 100 commits each, so 1000 commits in total
   per_page <- 100
   max_pages <- 30
@@ -872,7 +901,7 @@ resolve_package_commit <- function(
   return(commit)
 }
 
-#' Get shared cache file path
+#' Get Shared Cache File Path
 #' @return Path to shared cache file
 #' @noRd
 get_cache_file <- function() {
@@ -897,26 +926,81 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
   package_name <- git_pkg$package_name
   repo_url <- git_pkg$repo_url
   commit <- git_pkg$commit
-  output <- nix_hash(repo_url, commit, is_python = TRUE, ...)
+  private <- if (is.null(git_pkg$private)) FALSE else git_pkg$private
+  
+  # For private repos with SSH URLs, convert to HTTPS for hash calculation
+  # but keep original SSH URL for Nix expression generation
+  if (isTRUE(private) && grepl("^git@", repo_url)) {
+    # Convert git@github.com:user/repo.git to https://github.com/user/repo
+    hash_url <- sub("^git@([^:]+):(.*)$", "https://\\1/\\2", repo_url)
+    hash_url <- sub("\\.git$", "", hash_url)
+  } else {
+    hash_url <- repo_url
+  }
+  
+  output <- nix_hash(hash_url, commit, is_python = TRUE, ...)
   sri_hash <- output$sri_hash
 
-  # Python packages from git usually don't need 'imports' derived from DESCRIPTION
-  # We assume dependencies are handled by other means or propagatedBuildInputs manually added
-  imports <- output$deps$imports
-  if (!is.null(imports) && length(imports) > 0 && imports != "") {
-    imports_string <- paste(imports, collapse = " ")
-    propagated_inputs <- sprintf(
-      "propagatedBuildInputs = builtins.attrValues {\n        inherit (pkgs.%%s) %s;\n      };",
-      imports_string
-    )
-  } else {
-    propagated_inputs <- "propagatedBuildInputs = [ ];"
-  }
+  propagated_inputs <- generate_py_propagated_inputs(
+    output$deps$imports,
+    py_ver_attr
+  )
 
   pkg_attr <- gsub("[^a-zA-Z0-9]", "_", package_name)
 
-  sprintf(
-    '
+  # Generate Nix expression based on whether it's a private repo
+  if (isTRUE(private)) {
+    # For private repos, use builtins.fetchGit with SSH URL
+    # Validate that SSH URL is provided
+    if (grepl("^https://", repo_url)) {
+      stop(
+        "Private repositories require SSH URLs.\n",
+        "Please provide the repository URL in SSH format (e.g., 'git@github.com:user/repo.git') ",
+        "instead of HTTPS ('", repo_url, "').",
+        call. = FALSE
+      )
+    }
+    
+    # Display warning about tradeoffs
+    warning(
+      "Python package '", package_name, "' is configured as private and will use builtins.fetchGit.\n",
+      "Tradeoffs:\n",
+      "  - PRO: Works seamlessly with your SSH keys for private repositories\n",
+      "  - CON: Cannot be cached in Nix binary caches (less reproducible)\n",
+      "  - CON: Requires SSH keys to be available during evaluation\n",
+      "  - CON: May not work in pure Nix evaluation mode or some CI/CD environments\n",
+      "Consider making the repository public if you need reproducible builds in CI/CD.",
+      call. = FALSE
+    )
+    
+    sprintf(
+      '
+    %s = (pkgs.%s.buildPythonPackage {
+      pname = "%s";
+      version = "%s-git";
+      src = builtins.fetchGit {
+        url = "%s";
+        rev = "%s";
+      };
+      pyproject = true;
+      build-system = [ pkgs.%s.setuptools ];
+      doCheck = false;
+      %s
+    });
+',
+      pkg_attr,
+      py_ver_attr,
+      package_name,
+      substring(commit, 1, 7),
+      repo_url,
+      commit,
+      py_ver_attr,
+      sprintf(propagated_inputs, py_ver_attr)
+    )
+  } else {
+    # For public repos, use pkgs.fetchgit with sha256
+    sprintf(
+      '
     %s = (pkgs.%s.buildPythonPackage {
       pname = "%s";
       version = "%s-git";
@@ -931,16 +1015,17 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
       %s
     });
 ',
-    pkg_attr,
-    py_ver_attr,
-    package_name,
-    substring(commit, 1, 7),
-    repo_url,
-    commit,
-    sri_hash,
-    py_ver_attr,
-    sprintf(propagated_inputs, py_ver_attr)
-  )
+      pkg_attr,
+      py_ver_attr,
+      package_name,
+      substring(commit, 1, 7),
+      repo_url,
+      commit,
+      sri_hash,
+      py_ver_attr,
+      sprintf(propagated_inputs, py_ver_attr)
+    )
+  }
 }
 
 #' fetch_py_gits
@@ -965,9 +1050,9 @@ fetch_py_gits <- function(git_pkgs, py_ver_attr, ...) {
 #' @noRd
 fetch_pypi <- function(pkg_descriptor, py_ver_attr, ...) {
   # Parse pkg_descriptor "name" or "name@version"
-  parts <- strsplit(pkg_descriptor, "@")[[1]]
-  pname <- parts[1]
-  version <- if (length(parts) > 1) parts[2] else "latest"
+  pkg_parts <- parse_pkg_name_version(pkg_descriptor)
+  pname <- pkg_parts$name
+  version <- pkg_parts$version
 
   # Get metadata from PyPI
   meta <- get_pypi_meta(pname, version)
@@ -979,16 +1064,10 @@ fetch_pypi <- function(pkg_descriptor, py_ver_attr, ...) {
   output <- hash_url(url, is_python = TRUE)
   sri_hash <- output$sri_hash
 
-  imports <- output$deps$imports
-  if (!is.null(imports) && length(imports) > 0 && imports != "") {
-    imports_string <- paste(imports, collapse = " ")
-    propagated_inputs <- sprintf(
-      "propagatedBuildInputs = builtins.attrValues {\n        inherit (pkgs.%%s) %s;\n      };",
-      imports_string
-    )
-  } else {
-    propagated_inputs <- "propagatedBuildInputs = [ ];"
-  }
+  propagated_inputs <- generate_py_propagated_inputs(
+    output$deps$imports,
+    py_ver_attr
+  )
 
   pkg_attr <- gsub("[^a-zA-Z0-9]", "_", pname)
 
@@ -1078,4 +1157,81 @@ get_pypi_meta <- function(pname, version) {
   }
 
   list(version = version, url = url)
+}
+
+#' Normalize Git URL
+#' @param remote A character, short format "username/repo" or full URL
+#' @return A character, full URL
+#' @noRd
+normalize_git_url <- function(remote) {
+  # Check if this is already a full URL
+  if (grepl("^https://", remote)) {
+    # Extract the URL without the @commit part
+    url_parts <- strsplit(remote, "@")[[1]]
+    return(url_parts[1])
+  } else {
+    # Short format like "username/repo" - assume GitHub
+    parts <- strsplit(remote, "@")[[1]]
+    return(paste0("https://github.com/", parts[1]))
+  }
+}
+
+#' Parse Package Name and Version
+#' @param pkg_string A character, "name" or "name@version"
+#' @return A list with "name" and "version"
+#' @noRd
+parse_pkg_name_version <- function(pkg_string) {
+  parts <- strsplit(pkg_string, "@")[[1]]
+  list(
+    name = parts[1],
+    version = if (length(parts) > 1) parts[2] else "latest"
+  )
+}
+
+#' Check for GitHub PAT and set header if available
+#' @param h A curl handle
+#' @param repo A character, the repository name
+#' @param context A character, the context for the message
+#' @noRd
+check_github_pat <- function(
+  h,
+  repo,
+  context = "fetching the commit date from GitHub"
+) {
+  token <- Sys.getenv("GITHUB_PAT")
+  token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
+
+  if (grepl(token_pattern, token)) {
+    curl::handle_setheaders(h, Authorization = paste("token", token))
+  } else {
+    message(
+      paste0(
+        "When ",
+        context,
+        " from <<< ",
+        repo,
+        " >>>, no GitHub Personal Access Token found.\nPlease set GITHUB_PAT in your environment.\nFalling back to unauthenticated API request.\n"
+      )
+    )
+  }
+}
+
+#' Generate propagatedBuildInputs for Python packages
+#' @param imports A character vector of imports
+#' @param py_ver_attr A character, the Python version attribute
+#' @return A character, the Nix expression for propagatedBuildInputs
+#' @noRd
+generate_py_propagated_inputs <- function(imports, py_ver_attr) {
+  if (!is.null(imports) && length(imports) > 0 && any(imports != "")) {
+    # filter out empty strings
+    imports <- imports[imports != ""]
+    imports_string <- paste(imports, collapse = " ")
+    sprintf(
+      "propagatedBuildInputs = builtins.attrValues {\n        inherit (pkgs.%s) %s;\n      };",
+      py_ver_attr,
+      imports_string
+    )
+  } else {
+    "propagatedBuildInputs = [ ];"
+  }
 }

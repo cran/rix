@@ -12,7 +12,7 @@
 
 
 
-<title>Setting up and using Nix and rix on macOS</title>
+<title>Setting Up and Using Nix and Rix on macOS</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -337,7 +337,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Setting up and using Nix and rix on
+<h1 class="title toc-ignore">Setting Up and Using Nix and Rix on
 macOS</h1>
 
 
@@ -352,28 +352,54 @@ instead.</em></p>
 systems: macOS and Linux distributions. Windows is “supported” because
 it is actually running Linux thanks to WSL2. In practice this means that
 Linux distributions and Windows can be considered one system, and macOS
-another, separate, system, with its own idiosyncrasies. This vignette
+another, separate system, with its own idiosyncrasies. This vignette
 details these.</p>
 <p>Nix on macOS does not have full feature parity with Linux. Because
 macOS relies on proprietary system frameworks and Xcode’s SDKs,
-reproducibility cannot always be guaranteed. For example, many builds
-implicitly depend on the macOS SDK from Xcode; when Apple updates Xcode
-or the system frameworks, a pinned nixpkgs revision that used to build
-may stop working. This kind of “SDK drift” is not an issue on Linux,
-where Nix controls the full dependency graph.</p>
-<p>In practice, this means an environment that worked on macOS may stop
-building after a system update or when using older pinned snapshots. We
-recommend committing the generated <code>default.nix</code> to version
-control and updating the pinned date if you encounter build
-failures.</p>
-<p>As a mitigation, consider setting up your own private binary cache
-(e.g. with Cachix, using <code>ga_cachix()</code>). This allows you to
-reuse builds you know work on your system, avoiding repeated
-recompilation and insulating you somewhat from upstream cache gaps.</p>
+reproducibility cannot always be guaranteed in the same way as on Linux.
+On Linux, nixpkgs controls the full toolchain stack (C library,
+compilers, linker, and most system dependencies). As a result,
+historical nixpkgs snapshots often continue to build successfully years
+later.</p>
+<p>On macOS, however, many builds implicitly depend on the macOS SDK
+from Xcode as well as Apple’s dynamic loader (<code>dyld</code>). These
+components are provided by the operating system and change across macOS
+and Xcode updates. When Apple updates Xcode or system frameworks, a
+pinned nixpkgs revision that used to build may stop working — even if
+nothing in your project has changed. This kind of “SDK drift” is not an
+issue on Linux, where Nix controls the full dependency graph.</p>
+<p>In practice, this means:</p>
+<ul>
+<li>An environment that worked on macOS may stop building after a system
+or Xcode update.</li>
+<li>Older pinned nixpkgs snapshots are more likely to fail on newer
+macOS versions.</li>
+<li>The same snapshot will often continue to work without issue on
+Linux.</li>
+</ul>
+<p>This is not a <code>{rix}</code> problem, nor something the nixpkgs
+maintainers can fully prevent. It is a structural limitation of the
+macOS platform and its reliance on proprietary system components.</p>
+<p>We recommend committing the generated <code>default.nix</code> to
+version control and, if you encounter build failures on macOS, first
+trying a more recent pinned date. As a mitigation, you may also consider
+setting up your own private binary cache (e.g. with Cachix, using
+<code>ga_cachix()</code>). This allows you to reuse builds you know work
+on your system, avoiding repeated recompilation and insulating you
+somewhat from upstream cache gaps.</p>
+<p>If you require long-term archival reproducibility across time (for
+example, to rebuild environments from several years ago and compare
+outputs), we strongly recommend building those historical nixpkgs
+snapshots on Linux — ideally inside a Docker container or a Linux
+virtual machine — rather than directly on macOS. Linux environments are
+significantly more stable over time because nixpkgs controls the entire
+toolchain and C library stack. Running inside Docker also isolates the
+environment from host system updates, providing much more reliable
+reproducibility when comparing results across time.</p>
 <p>These problems are less common with recent snapshots, as macOS
 support in Nix continues to improve. Still, if you need to work with
 older versions of R (or other software sensitive to system SDK changes),
-you should be aware of this limitation.</p>
+you should be aware of this limitation when working on macOS.</p>
 </div>
 <div id="why-rix-and-nix" class="section level2">
 <h2>Why rix <em>and</em> Nix?</h2>

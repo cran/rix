@@ -1,6 +1,9 @@
 
 let
-  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/REVISION.tar.gz") {};
+  pkgs = import (fetchTarball {
+    url = "https://github.com/rstats-on-nix/nixpkgs/archive/REVISION.tar.gz";
+    sha256 = "SHA256HASH";
+  }) {};
  
   rpkgs = builtins.attrValues {
     inherit (pkgs.rPackages) 
@@ -73,11 +76,9 @@ let
       };
     });
  
-  tex = (pkgs.texlive.combine {
-    inherit (pkgs.texlive) 
-      scheme-small
-      amsmath;
-  });
+  tex = (pkgs.texliveSmall.withPackages (ps: with ps; [
+      amsmath
+  ]));
     
   system_packages = builtins.attrValues {
     inherit (pkgs) 
@@ -90,7 +91,7 @@ let
   };
   
   shell = pkgs.mkShell {
-    LOCALE_ARCHIVE = if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then "${pkgs.glibcLocales}/lib/locale/locale-archive" else "";
+    LOCALE_ARCHIVE = if pkgs.stdenv.hostPlatform.isx86_64 && pkgs.stdenv.isLinux then "${pkgs.glibcLocales}/lib/locale/locale-archive" else "";
     LANG = "en_US.UTF-8";
     LC_ALL = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
@@ -98,7 +99,7 @@ let
     LC_PAPER = "en_US.UTF-8";
     LC_MEASUREMENT = "en_US.UTF-8";
     
-    buildInputs = [ housing fusen AER rpkgs tex system_packages ];
+    buildInputs = pkgs.lib.flatten [ housing fusen AER rpkgs tex system_packages ];
     
   }; 
 in

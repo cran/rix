@@ -45,7 +45,12 @@ testthat::test_that("Test fetchgit works with gitlab packages", {
 testthat::test_that("Test fetchgit works with custom Git hosts (Forgejo/Gitea)", {
   testthat::skip_on_cran()
   skip_if_not(nix_shell_available())
-  testthat::expect_equal(
+  testthat::skip_if_not(
+    nzchar(Sys.which("git")),
+    "git command line tool is required"
+  )
+
+  result <- tryCatch(
     fetchgit(
       list(
         package_name = "opusreader2",
@@ -53,6 +58,22 @@ testthat::test_that("Test fetchgit works with custom Git hosts (Forgejo/Gitea)",
         commit = "36a9b82835d42c039dc5e202337beb290bba7f85"
       )
     ),
+    error = function(e) {
+      if (
+        grepl(
+          "403|forbidden|Failed to clone|Failed to checkout|HTML page",
+          e$message,
+          ignore.case = TRUE
+        )
+      ) {
+        testthat::skip("Forgejo/Gitea server returned error or is unreachable")
+      }
+      stop(e)
+    }
+  )
+
+  testthat::expect_equal(
+    result,
     "\n    opusreader2 = (pkgs.rPackages.buildRPackage {\n      name = \"opusreader2\";\n      src = pkgs.fetchgit {\n        url = \"https://codefloe.com/spectral-cockpit/opusreader2\";\n        rev = \"36a9b82835d42c039dc5e202337beb290bba7f85\";\n        sha256 = \"sha256-XGfHKhxeoVC5nvkW0OF0PPNBat8RtWWmF5s8Oc3jtBY=\";\n      };\n      propagatedBuildInputs = builtins.attrValues {\n        inherit (pkgs.rPackages) ;\n      };\n    });\n"
   )
 })
@@ -110,7 +131,10 @@ testthat::test_that("Test fetchgits", {
     fetchgits(pkg_list),
     expected_output
   )
-  on.exit(unlink(cache_file))
+  on.exit({
+    unlink(cache_file)
+    options(rix.commit_cache = character(0))
+  })
 })
 
 testthat::test_that("Test fetchgits works when PR is provided in a remote package, but does not use it", {
@@ -157,7 +181,10 @@ testthat::test_that("Test fetchgits works when PR is provided in a remote packag
     fetchgits(pkg_list),
     expected_output
   )
-  on.exit(unlink(cache_file))
+  on.exit({
+    unlink(cache_file)
+    options(rix.commit_cache = character(0))
+  })
 })
 
 testthat::test_that("Test fetchgits works when tag is provided in a remote package, but does not use it", {
@@ -181,7 +208,10 @@ testthat::test_that("Test fetchgits works when tag is provided in a remote packa
     fetchgits(pkg_list),
     expected_output
   )
-  on.exit(unlink(cache_file))
+  on.exit({
+    unlink(cache_file)
+    options(rix.commit_cache = character(0))
+  })
 })
 
 testthat::test_that("Test fetchzips works", {
@@ -334,11 +364,11 @@ testthat::test_that("get_commit_date works with Forgejo/Gitea platforms", {
   testthat::skip_on_cran()
   date <- get_commit_date(
     repo = "spectral-cockpit/opusreader2",
-    commit_sha = "36a9b82835d42c039dc5e202337beb290bba7f85",
+    commit_sha = "0885e740ccd70b1f6a03ef006b6ffa7409422426",
     platform = "git",
     base_url = "https://codefloe.com"
   )
-  testthat::expect_match(date, "2026-01-21T08:42:18Z")
+  testthat::expect_match(date, "2026-08-25T23:18:42Z")
 })
 
 testthat::test_that("Test download_all_commits works with valid repo", {

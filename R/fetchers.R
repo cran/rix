@@ -11,7 +11,7 @@ fetchgit <- function(git_pkg, ...) {
   repo_url <- git_pkg$repo_url
   commit <- git_pkg$commit
   private <- if (is.null(git_pkg$private)) FALSE else git_pkg$private
-  
+
   # For private repos with SSH URLs, convert to HTTPS for hash calculation
   # but keep original SSH URL for Nix expression generation
   if (isTRUE(private) && grepl("^git@", repo_url)) {
@@ -21,7 +21,7 @@ fetchgit <- function(git_pkg, ...) {
   } else {
     hash_url <- repo_url
   }
-  
+
   output <- nix_hash(hash_url, commit, ...)
   sri_hash <- output$sri_hash
 
@@ -104,14 +104,18 @@ generate_git_nix_expression <- function(
       stop(
         "Private repositories require SSH URLs.\n",
         "Please provide the repository URL in SSH format (e.g., 'git@github.com:user/repo.git') ",
-        "instead of HTTPS ('", repo_url, "').",
+        "instead of HTTPS ('",
+        repo_url,
+        "').",
         call. = FALSE
       )
     }
-    
+
     # Display warning about tradeoffs
     warning(
-      "Package '", package_name, "' is configured as private and will use builtins.fetchGit.\n",
+      "Package '",
+      package_name,
+      "' is configured as private and will use builtins.fetchGit.\n",
       "Tradeoffs:\n",
       "  - PRO: Works seamlessly with your SSH keys for private repositories\n",
       "  - CON: Cannot be cached in Nix binary caches (less reproducible)\n",
@@ -120,7 +124,7 @@ generate_git_nix_expression <- function(
       "Consider making the repository public if you need reproducible builds in CI/CD.",
       call. = FALSE
     )
-    
+
     sprintf(
       '
     %s = (pkgs.rPackages.buildRPackage {
@@ -822,6 +826,7 @@ get_closest_commit <- function(commits_df, target_date) {
 #' @param ... Further arguments passed down to methods.
 #' @return A character. The commit SHA of the closest commit to the target date
 #'   or "HEAD" if API fails
+#' @importFrom stats setNames
 #' @noRd
 resolve_package_commit <- function(
   remote_pkg_name_and_ref,
@@ -831,6 +836,14 @@ resolve_package_commit <- function(
 ) {
   pkg_name <- remote_pkg_name_and_ref[[1]]
 
+  # Check session-level in-memory commit cache
+  mem_cache <- getOption("rix.commit_cache")
+  if (
+    !is.null(mem_cache) && !is.null(pkg_name) && pkg_name %in% names(mem_cache)
+  ) {
+    return(unname(mem_cache[pkg_name]))
+  }
+
   # Check if ignore_remotes_cache was passed, otherwise set to FALSE
   args <- list(...)
   ignore_remotes_cache <- if (!is.null(args$ignore_remotes_cache)) {
@@ -839,15 +852,18 @@ resolve_package_commit <- function(
     FALSE
   }
 
-  # Check if package is already in cache
+  # Check if package is already in file-based cache
   if (!ignore_remotes_cache) {
     cache_file <- get_cache_file()
     cache <- readRDS(cache_file)
     pkg_matches <- grep(paste0("^", pkg_name, "@"), cache$commit_cache)
 
-    # Return commit from cache if found
+    # Return commit from file cache if found, and populate in-memory cache
     if (length(pkg_matches) > 0) {
-      return(cache$commit_cache[pkg_matches[1]])
+      mem_commit <- unname(cache$commit_cache[pkg_matches[1]])
+      mem_cache <- getOption("rix.commit_cache", character(0))
+      options(rix.commit_cache = c(mem_cache, setNames(mem_commit, pkg_name)))
+      return(mem_commit)
     }
   }
   # Store package name and ref in cache key if ref (commit-sha) is provided
@@ -898,6 +914,12 @@ resolve_package_commit <- function(
     saveRDS(cache, cache_file)
   }
 
+  # Update session-level in-memory cache
+  if (!is.null(commit) && nzchar(commit)) {
+    mem_cache <- getOption("rix.commit_cache", character(0))
+    options(rix.commit_cache = c(mem_cache, setNames(commit, pkg_name)))
+  }
+
   return(commit)
 }
 
@@ -927,7 +949,7 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
   repo_url <- git_pkg$repo_url
   commit <- git_pkg$commit
   private <- if (is.null(git_pkg$private)) FALSE else git_pkg$private
-  
+
   # For private repos with SSH URLs, convert to HTTPS for hash calculation
   # but keep original SSH URL for Nix expression generation
   if (isTRUE(private) && grepl("^git@", repo_url)) {
@@ -937,7 +959,7 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
   } else {
     hash_url <- repo_url
   }
-  
+
   output <- nix_hash(hash_url, commit, is_python = TRUE, ...)
   sri_hash <- output$sri_hash
 
@@ -956,14 +978,18 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
       stop(
         "Private repositories require SSH URLs.\n",
         "Please provide the repository URL in SSH format (e.g., 'git@github.com:user/repo.git') ",
-        "instead of HTTPS ('", repo_url, "').",
+        "instead of HTTPS ('",
+        repo_url,
+        "').",
         call. = FALSE
       )
     }
-    
+
     # Display warning about tradeoffs
     warning(
-      "Python package '", package_name, "' is configured as private and will use builtins.fetchGit.\n",
+      "Python package '",
+      package_name,
+      "' is configured as private and will use builtins.fetchGit.\n",
       "Tradeoffs:\n",
       "  - PRO: Works seamlessly with your SSH keys for private repositories\n",
       "  - CON: Cannot be cached in Nix binary caches (less reproducible)\n",
@@ -972,7 +998,7 @@ fetch_py_git <- function(git_pkg, py_ver_attr, ...) {
       "Consider making the repository public if you need reproducible builds in CI/CD.",
       call. = FALSE
     )
-    
+
     sprintf(
       '
     %s = (pkgs.%s.buildPythonPackage {
@@ -1199,9 +1225,8 @@ check_github_pat <- function(
   context = "fetching the commit date from GitHub"
 ) {
   token <- Sys.getenv("GITHUB_PAT")
-  token_pattern <- "^(gh[ps]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})$"
 
-  if (grepl(token_pattern, token)) {
+  if (nzchar(token)) {
     curl::handle_setheaders(h, Authorization = paste("token", token))
   } else {
     message(

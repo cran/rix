@@ -643,37 +643,38 @@ if you work on a project with colleagues that use <code>uv</code> and
 that don’t want (yet) to use Nix. <code>uv</code>, is 10-100x faster
 than <code>pip</code> and also generates a lock file for improved
 reproducibility.</p>
-<p>The idea is to install <code>uv</code> in your shell (but not any
-Python nor Python packages):</p>
+<p>The idea is to install <code>uv</code> and let it install the project
+Python and Python packages:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  ...</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  ...,</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  ...</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>)</span></code></pre></div>
 <p>And then use <code>uv</code> from your shell as you would usually. We
-recommend specifying Python packages in a <code>requirements.txt</code>
-file, and specifying explicit versions (e.g.,
-<code>scanpy==1.11.4</code>). Finally, we also recommend setting a shell
-hook to set up the virtual environment and install the packages from the
-<code>requirements.txt</code> when entering the shell (mind the
+recommend specifying Python packages in <code>pyproject.toml</code>, and
+specifying explicit versions (e.g., <code>scanpy==1.11.4</code>).
+Finally, we also recommend setting a shell hook to set up the virtual
+environment and install the packages from the
+<code>pyproject.toml</code> when entering the shell (mind the
 quotes):</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  ...</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;uv&quot;</span>),</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">shell_hook =</span> <span class="st">&quot;</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="st">      if [ ! -f pyproject.toml ]; then</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="st">        uv init --python 3.13.5 # or whichever Python version you need</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="st">        uv init</span></span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="st">      fi</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="st">        uv add --requirements requirements.txt</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="st">      # Create alias so python uses uvs environment</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="st">      uv sync</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="st">      # Create alias so python uses uv&#39;s environment</span></span>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="st">      alias python=&#39;uv run python&#39;</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="st">  &quot;</span>,</span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>)</span></code></pre></div>
 <p>After running <code>nix-shell</code>, <code>uv</code> should
-initalize a Python project with the specified Python version and install
-the packages listed in <code>requirements.txt</code> within the nix
-environment. This will take place each time <code>nix-shell</code> is
-called, however this will be cached and not installed each time.</p>
+initialize a project using the Python version available in the Nix
+environment and install the dependencies declared in
+<code>pyproject.toml</code>. Synchronization runs each time
+<code>nix-shell</code> is called, but downloaded packages and builds are
+cached.</p>
 <p>To make sure everything works fine, you could simply start a Python
 interpreter and try to load <code>numpy</code>. This should work fine,
 but if it doesn’t, the following error could be raised:</p>

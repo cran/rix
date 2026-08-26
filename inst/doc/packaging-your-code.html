@@ -12,7 +12,7 @@
 
 <meta name="author" content="Bruno Rodrigues" />
 
-<meta name="date" content="2026-02-18" />
+<meta name="date" content="2026-08-26" />
 
 <title>Packaging Your Code in R and Python with Rix</title>
 
@@ -342,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Packaging Your Code in R and Python with
 Rix</h1>
 <h4 class="author">Bruno Rodrigues</h4>
-<h4 class="date">2026-02-18</h4>
+<h4 class="date">2026-08-26</h4>
 
 
 
@@ -538,7 +538,9 @@ analysis project), use
 <span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>  <span class="op">];</span></span>
 <span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="op">}</span>;</span></code></pre></div>
 <p>Then add <code>pyclean</code> to the <code>buildInputs</code> list
-alongside your other Python packages.</p>
+alongside your other Python packages. To avoid manual edits, consider
+updating <code>gen-env.R</code> to generate these lines automatically
+(for example, by using an LLM to help write the necessary R code).</p>
 </div>
 </div>
 

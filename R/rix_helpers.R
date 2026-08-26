@@ -13,14 +13,33 @@ generate_header <- function(nix_repo, r_version, rix_call, ide) {
   } else {
     allow_unfree <- ""
   }
+
+  has_sha256 <- !is.null(nix_repo$sha256) &&
+    !is.na(nix_repo$sha256) &&
+    nzchar(nix_repo$sha256)
+
+  if (has_sha256) {
+    fetch_tarball_expr <- sprintf(
+      'pkgs = import (fetchTarball {\n    url = "%s";\n    sha256 = "%s";\n  }) {%s};',
+      nix_repo$url,
+      nix_repo$sha256,
+      allow_unfree
+    )
+  } else {
+    fetch_tarball_expr <- sprintf(
+      'pkgs = import (fetchTarball "%s") {%s};',
+      nix_repo$url,
+      allow_unfree
+    )
+  }
+
   if (identical(Sys.getenv("TESTTHAT"), "true")) {
     sprintf(
       '
 let
-  pkgs = import (fetchTarball "%s") {%s};
+  %s
 ',
-      nix_repo$url,
-      allow_unfree
+      fetch_tarball_expr
     )
   } else {
     # Generate the correct text for the header depending on wether
@@ -51,15 +70,14 @@ let
 # which will install R %s.
 # Report any issues to https://github.com/ropensci/rix
 let
- pkgs = import (fetchTarball "%s") {%s};
+  %s
 ',
         rix_version,
         Sys.Date(),
         generate_rix_call(rix_call, nix_repo),
         nix_revision,
         r_ver_text,
-        nix_url,
-        allow_unfree
+        fetch_tarball_expr
       )
     } else {
       # if we're using rstats-on-nix
@@ -72,13 +90,12 @@ let
 # Apple Silicon computers.
 # Report any issues to https://github.com/ropensci/rix
 let
- pkgs = import (fetchTarball "%s") {%s};
+  %s
 ',
         rix_version,
         Sys.Date(),
         generate_rix_call(rix_call, nix_repo),
-        nix_url,
-        allow_unfree
+        fetch_tarball_expr
       )
     }
   }
@@ -186,15 +203,14 @@ generate_local_r_pkgs <- function(local_r_pkgs, flag_local_r_pkgs) {
 #' @noRd
 generate_tex_pkgs <- function(tex_pkgs) {
   if (!is.null(tex_pkgs)) {
-    tex_pkgs <- unique(c("scheme-small", sort(tex_pkgs)))
+    tex_pkgs <- setdiff(sort(unique(tex_pkgs)), "scheme-small")
 
     tex_pkgs <- paste(c("", tex_pkgs), collapse = "\n      ")
 
     sprintf(
       "
-  tex = (pkgs.texlive.combine {
-    inherit (pkgs.texlive) %s;
-  });
+  tex = (pkgs.texliveSmall.withPackages (ps: with ps; [%s
+  ]));
 ",
       tex_pkgs
     )
@@ -469,7 +485,7 @@ generate_wrapped_pkgs <- function(
     sprintf(
       "
   wrapped_pkgs = pkgs.%s.override {
-    packages = [ %s %s %s ];
+    packages = pkgs.lib.flatten [ %s %s %s ];
   };
 ",
       attrib[ide],
@@ -532,7 +548,7 @@ generate_shell <- function(
     %s
     %s
     %s
-    buildInputs = [ %s %s %s %s %s system_packages %s %s ];
+    buildInputs = pkgs.lib.flatten [ %s %s %s %s %s system_packages %s %s ];
     %s
   };",
       generate_locale_archive(detect_os()),

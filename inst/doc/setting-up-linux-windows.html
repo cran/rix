@@ -342,122 +342,127 @@ and Windows</h1>
 
 
 
-<p><em>This vignette will discuss Linux and Windows-specific topics. If
-you’re not using either of these systems, you can ignore this vignette,
-and read the <code>vignette(&quot;setting-up-macos&quot;)</code> vignette
-instead.</em></p>
+<p><em>This vignette covers Linux- and Windows-specific topics. If
+you’re using macOS instead, read the
+<code>vignette(&quot;setting-up-macos&quot;)</code> vignette.</em></p>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>When it comes to Nix, there are really only two supported operating
-systems: macOS and Linux distributions. Windows is “supported” because
-it is actually running Linux thanks to WSL2. In practice this means that
-Linux distributions and Windows can be considered one system, and macOS
-another, separate, system. Because Windows is really running Linux under
-the hood thanks to WSL2, this means that WSL2 needs to be running on
-your Windows system before you attempt to install Nix. But it is
-important to know that you can run <code>{rix}</code> even if you don’t
-have Nix installed, which means you can generate Nix expressions, you
-just can’t build them. So if you can’t install Nix on your system, but
-have R already installed, you can skip to the last section of this
-vignette to simply install the <code>{rix}</code> package.</p>
+<p>Nix officially supports only two operating systems: macOS and Linux.
+Windows support comes via WSL2, which runs a real Linux distribution
+under the hood — so for our purposes, Linux and Windows can be treated
+as a single case, with macOS as the separate one. Because Windows relies
+on WSL2, you’ll need WSL2 running before installing Nix.</p>
+<p>Note that you don’t need Nix installed to use <code>{rix}</code>
+itself: the package can generate Nix expressions on any system, you just
+won’t be able to <em>build</em> them without Nix. So if you can’t
+install Nix on your machine but already have R, you can skip ahead to
+the last section of this vignette to install <code>{rix}</code> on its
+own.</p>
 </div>
 <div id="why-rix-and-nix" class="section level2">
 <h2>Why rix <em>and</em> Nix?</h2>
-<p>You don’t have to install Nix to use <code>{rix}</code>: you can
-generate valid Nix expressions using <code>{rix}</code> even on a system
-where Nix isn’t present. However, this means that you won’t be able to
-build these expressions on that system.</p>
+<p>To reiterate: <code>{rix}</code> will generate valid Nix expressions
+even on a system where Nix isn’t installed. The catch is that you won’t
+be able to build those expressions until Nix is actually present.</p>
 </div>
 <div id="installing-nix" class="section level2">
 <h2>Installing Nix</h2>
-<div id="windows-pre-requisites" class="section level3">
-<h3>Windows pre-requisites</h3>
-<p>If you are on Windows, you need the Windows Subsystem for Linux 2
-(WSL2) to run Nix. If you are on a recent version of Windows 10 or 11,
-you can simply run this as an administrator in PowerShell:</p>
+<div id="windows-prerequisites" class="section level3">
+<h3>Windows prerequisites</h3>
+<p>On Windows, you’ll need the Windows Subsystem for Linux 2 (WSL2) to
+run Nix. On a recent version of Windows 10 or 11, install it by running
+the following as an administrator in PowerShell:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">wsl</span> <span class="at">--install</span></span></code></pre></div>
-<p>You can find further installation notes at <a href="https://learn.microsoft.com/en-us/windows/wsl/install">this
-official Microsoft documentation</a>.</p>
-<p>We recommend to activate systemd in Ubuntu WSL2, mainly because this
-supports other users than <code>root</code> running Nix. To set this up,
-please do as outlined in <a href="https://learn.microsoft.com/en-us/windows/wsl/systemd#how-to-enable-systemd">the
-official Microsoft WSL documentation</a>:</p>
+<p>For more details, see <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Microsoft’s
+official WSL installation docs</a>.</p>
+<p>We recommend enabling systemd in Ubuntu WSL2, since this allows users
+other than <code>root</code> to run Nix. Follow <a href="https://learn.microsoft.com/en-us/windows/wsl/systemd#how-to-enable-systemd">Microsoft’s
+systemd guide</a>:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># in WSL2 Ubuntu shell</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-i</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">nano</span> /etc/wsl.conf</span></code></pre></div>
-<p>This will open the <code>/etc/wsl.conf</code> in a nano, a command
-line text editor. Add the following line:</p>
+<p>This opens <code>/etc/wsl.conf</code> in nano, a command-line text
+editor. Add the following:</p>
 <pre><code>[boot]
 systemd=true</code></pre>
-<p>Save the file with CTRL-O and then quit nano with CTRL-X. Then, type
-the following line in powershell:</p>
+<p>Save with CTRL-O, then exit nano with CTRL-X. Back in PowerShell,
+run:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">wsl</span> <span class="at">--shutdown</span></span></code></pre></div>
-<p>and then relaunch WSL (Ubuntu) from the start menu.</p>
-<p>Afterwards, you can install Nix like business as usual. You can
-proceed with the Determinate Systems installer.</p>
+<p>Then relaunch WSL (Ubuntu) from the Start menu.</p>
+<p>Once WSL2 is set up, you can install Nix as usual — we recommend the
+Determinate Systems installer, described next.</p>
 </div>
 <div id="using-the-determinate-systems-installer" class="section level3">
 <h3>Using the Determinate Systems installer</h3>
-<p>You can use <code>{rix}</code> to generate Nix expressions even if
-you don’t have Nix installed on your system, but obviously, you need to
-install Nix if you actually want to build the defined development
-environment and use them.</p>
-<p>Installing (and uninstalling) Nix is quite simple, thanks to the
+<p>Again, you don’t need Nix installed to generate expressions with
+<code>{rix}</code> — but you do need it if you actually want to build
+the environments it defines.</p>
+<p>Installing (and uninstalling) Nix is straightforward thanks to the
 installer from <a href="https://determinate.systems/posts/determinate-nix-installer">Determinate
-Systems</a>, a company that provides services and tools built on
-Nix.</p>
-<p>Do not use your operating system’s package manager to install Nix.
-Instead, simply open a terminal and run the following line (on Windows,
-if you cannot or have decided not to activate systemd, then you have to
-append <code>--init none</code> to the command. You can find more
-details about this on <a href="https://github.com/DeterminateSystems/nix-installer">The
-Determinate Nix Installer page</a>):</p>
+Systems</a>, a company that builds services and tools on top of Nix.</p>
+<p>Avoid installing Nix through your operating system’s package manager.
+Instead, open a terminal and run:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--proto</span> <span class="st">&#39;=https&#39;</span> <span class="at">--tlsv1.2</span> <span class="at">-sSf</span> <span class="dt">\</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>    <span class="at">-L</span> https://install.determinate.systems/nix <span class="kw">|</span> <span class="dt">\</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>     <span class="fu">sh</span> <span class="at">-s</span> <span class="at">--</span> install</span></code></pre></div>
-<p>Then, configure the <code>rstats-on-nix</code> binary cache. This
-will download pre-built binaries of many R packages, significantly
-speeding up the building process. Many thanks to <a href="https://www.cachix.org/">Cachix</a> for sponsoring the
-<code>rstats-on-nix</code> cache!</p>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>     <span class="at">-L</span> https://install.determinate.systems/nix <span class="kw">|</span> <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="fu">sh</span> <span class="at">-s</span> <span class="at">--</span> install <span class="at">--no-confirm</span> <span class="at">--extra-conf</span> <span class="st">&quot;</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="st">trusted-users = root </span><span class="va">$USER</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="st">substituters = https://cache.nixos.org https://rstats-on-nix.cachix.org</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="st">trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= rstats-on-nix.cachix.org-1:vdiiVgocg6WeJrODIqdprZRUrhi1JzhBnXv7aWI6+F0=&quot;</span></span></code></pre></div>
+<p>On Windows, if you’ve decided not to (or can’t) enable systemd,
+append <code>--init none</code> to the command above. See the <a href="https://github.com/DeterminateSystems/nix-installer">Determinate
+Nix Installer page</a> for details.</p>
+<p>This installer automatically configures the
+<strong>rstats-on-nix</strong> Cachix cache, which provides pre-built
+binaries for many R packages and significantly speeds up environment
+creation. Many thanks to <a href="https://www.cachix.org/">Cachix</a>
+for sponsoring the <code>rstats-on-nix</code> cache!</p>
 </div>
-<div id="recommended-using-setup_cachix" class="section level3">
-<h3>Recommended: Using setup_cachix()</h3>
-<p>The simplest approach is to use <code>{rix}</code>’s
-<code>setup_cachix()</code> function from R. First, start R from a Nix
-shell:</p>
+</div>
+<div id="if-you-installed-nix-another-way" class="section level2">
+<h2>If you installed Nix another way</h2>
+<p>If you used the official Nix installer, Lix, or some other method,
+you’ll need to configure the <strong>rstats-on-nix</strong> Cachix cache
+yourself.</p>
+<div id="recommended-setup_cachix" class="section level3">
+<h3>Recommended: <code>setup_cachix()</code></h3>
+<p>The simplest approach is to let <code>{rix}</code> configure the
+cache for you.</p>
+<p>First, start R from a temporary Nix shell:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">nix-shell</span> <span class="at">-p</span> R rPackages.rix</span></code></pre></div>
-<p>On first use, this may take a few minutes (up to 5 minutes) as Nix
-downloads R and required packages. Be patient! Subsequent runs will be
-instant.</p>
 <p>Then run:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>rix<span class="sc">::</span><span class="fu">setup_cachix</span>()</span></code></pre></div>
-<p>This configures the cache in <code>~/.config/nix/nix.conf</code>. You
-also need to add yourself as a trusted user so Nix allows you to use the
-cache. Run the following one-liner:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;trusted-users = root </span><span class="va">$USER</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/nix/nix.custom.conf <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> systemctl restart nix-daemon</span></code></pre></div>
-<p>This works for both standard Nix installations and Determinate Nix
-installations. If you see warnings like
-<code>ignoring untrusted substituter</code>, this means the
-trusted-users configuration is not in place.</p>
+<p>This updates <code>~/.config/nix/nix.conf</code>.</p>
+<p>You’ll also need to add yourself as a trusted user:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;trusted-users = root </span><span class="va">$USER</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/nix/nix.conf <span class="kw">&amp;&amp;</span> <span class="fu">sudo</span> systemctl restart nix-daemon</span></code></pre></div>
+<p>(Note: <code>/etc/nix/nix.custom.conf</code> is a Determinate
+Systems-specific mechanism, included by their managed
+<code>nix.conf</code> so that your customizations survive installer
+updates. Since this section covers non-Determinate installs, edit
+<code>/etc/nix/nix.conf</code> directly instead.)</p>
+<p>If you later see warnings like
+<code>ignoring untrusted substituter</code>, it usually means this step
+was skipped.</p>
 </div>
-<div id="alternative-using-the-cachix-client" class="section level3">
-<h3>Alternative: Using the cachix client</h3>
-<p>Alternatively, you can use the <code>cachix</code> command-line
-client:</p>
+<div id="alternative-the-cachix-client" class="section level3">
+<h3>Alternative: the <code>cachix</code> client</h3>
+<p>You can instead configure the cache manually with the
+<code>cachix</code> command-line client:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">nix-env</span> <span class="at">-iA</span> cachix <span class="at">-f</span> https://cachix.org/api/v1/install</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">cachix</span> use rstats-on-nix</span></code></pre></div>
-<p>Note: If you installed Nix using the Determinate Systems installer,
-this approach will not work because <code>/etc/nix/nix.conf</code> is
-protected and restored on restart. Use <code>setup_cachix()</code>
-instead.</p>
+</div>
+<div id="optional-add-mischko-hemings-binary-cache" class="section level3">
+<h3>Optional: add Mischko Heming’s binary cache</h3>
+<p>Once the <code>rstats-on-nix</code> cache is configured, you can also
+enable Mischko Heming’s binary cache — see <a href="#using-mischko-hemings-binary-cache">Using Mischko Heming’s binary
+cache</a> below.</p>
 </div>
 <div id="nixos-users" class="section level3">
 <h3>NixOS users</h3>
-<p>If you are using NixOS, the Nix configuration is managed
-declaratively through your system configuration, so
-<code>setup_cachix()</code> and <code>cachix use</code> will not work.
-Instead, add the cache to your <code>configuration.nix</code>:</p>
+<p>On NixOS, Nix configuration is managed declaratively through your
+system configuration, so neither <code>setup_cachix()</code> nor
+<code>cachix use</code> will work. Instead, add the cache to your
+<code>configuration.nix</code>:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode nix"><code class="sourceCode nix"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>nix<span class="op">.</span>settings = <span class="op">{</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="va">substituters</span> <span class="op">=</span> <span class="op">[</span></span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="st">&quot;https://cache.nixos.org&quot;</span></span>
@@ -480,111 +485,140 @@ instead:</p>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="op">}</span>;</span></code></pre></div>
 <p>Then rebuild your system with <code>sudo nixos-rebuild switch</code>
 (or <code>home-manager switch</code> for Home Manager).</p>
-<p>On Linux, once Nix is installed, all the software that will be
-installed through Nix will be saved to the <code>/nix</code> directory
-on the root partition. It is common for Linux users to have a separate
-partition for <code>/</code>, which may be small. Complete development
-environments built with Nix can take up much space, so if the available
-space on your root partition is limited, we advise you to mount the
-<code>/nix</code> folder on another partition with more space (for
-example, a secondary hard drive). For this, edit <code>/etc/fstab</code>
-and add the following line at the end:</p>
+</div>
+</div>
+<div id="using-mischko-hemings-binary-cache" class="section level2">
+<h2>Using Mischko Heming’s binary cache</h2>
+<p>To use the <a href="https://github.com/mihem/attic">binary cache</a>
+by <a href="https://www.mheming.com">Mischko Heming</a>, add this to
+<code>~/.config/nix/nix.conf</code>:</p>
+<pre class="text"><code>extra-substituters = https://osmzhlab.uni-muenster.de:4949/r-packages
+extra-trusted-public-keys = r-packages:Op7Q3XME8az4XNcP1clupGw4ZbuaguBw+sUziweqpTY=</code></pre>
+<p>On NixOS, add this to your <code>configuration.nix</code>
+instead:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode nix"><code class="sourceCode nix"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="va">nix</span>.<span class="va">settings</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="va">extra-substituters</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>      <span class="st">&quot;https://osmzhlab.uni-muenster.de:4949/r-packages&quot;</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="op">];</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="va">extra-trusted-public-keys</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>      <span class="st">&quot;r-packages:Op7Q3XME8az4XNcP1clupGw4ZbuaguBw+sUziweqpTY=&quot;</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    <span class="op">];</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="op">};</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>On NixOS, rebuild with <code>sudo nixos-rebuild switch</code> (or
+<code>home-manager switch</code> for Home Manager). For regular Nix
+installations and flake-based projects, the settings take effect on the
+next Nix operation.</p>
+</div>
+<div id="a-note-on-disk-space" class="section level2">
+<h2>A note on disk space</h2>
+<p>Once Nix is installed on Linux, everything it builds gets stored
+under the <code>/nix</code> directory on the root partition. Since this
+partition is often small, and complete development environments built
+with Nix can take up substantial space, we recommend mounting
+<code>/nix</code> on a partition with more room (for example, a
+secondary hard drive) if space is tight. To do this, edit
+<code>/etc/fstab</code> and add the following line at the end:</p>
 <pre><code>/home/path_to/nix /nix none bind 0 0</code></pre>
-<p>This will map <code>/nix</code> to <code>/home/path_to/nix</code>
-which can be on a larger partition. If you have enough space on your
-root partition, you can ignore the above instructions.</p>
+<p>This maps <code>/nix</code> to <code>/home/path_to/nix</code>, which
+can live on a larger partition. If your root partition already has
+enough space, you can skip this step.</p>
 </div>
-</div>
-<div id="case-1-you-dont-have-r-installed-and-wish-to-install-it-using-nix-as-well" class="section level2">
-<h2>Case 1: you don’t have R installed and wish to install it using Nix
-as well</h2>
-<p>If you have successfully installed Nix, but don’t have yet R
-installed on your system, you could install R as you would usually do on
-your operating system, and then install the <code>{rix}</code> package,
-and from there, generate project-specific expressions and build them.
-But you could also install R using Nix. Running the following line in a
-terminal will drop you in an interactive R session that you can use to
-start generating expressions:</p>
+<div id="installing-rix" class="section level2">
+<h2>Installing rix</h2>
+<p>With Nix installed and the binary caches configured, the last step is
+getting <code>{rix}</code> itself onto your system. How you do that
+depends on whether R is already installed:</p>
+<div id="case-1-you-dont-have-r-installed-and-want-to-install-it-via-nix" class="section level3">
+<h3>Case 1: you don’t have R installed and want to install it via
+Nix</h3>
+<p>If you have Nix installed but not R, you have two options. You could
+install R the usual way for your OS and then install <code>{rix}</code>
+on top of it — from there, generate project-specific expressions and
+build them. Or you could install R through Nix directly. Running the
+following in a terminal drops you into an interactive R session you can
+use right away:</p>
 <pre><code>nix-shell -p R rPackages.rix</code></pre>
-<p>or if you prefer the development version of <code>{rix}</code>:</p>
+<p>Or, if you’d prefer the development version of
+<code>{rix}</code>:</p>
 <pre><code>nix-shell --expr &quot;$(curl -sl https://raw.githubusercontent.com/ropensci/rix/master/inst/extdata/default.nix)&quot;</code></pre>
-<p>This should immediately start an R session inside your terminal. You
-can now run something like this:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">library</span>(rix)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.4.2&quot;</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>)</span></code></pre></div>
-<p>to generate a <code>default.nix</code>, and then use that file to
-generate an environment with R, <code>{dplyr}</code> and
-<code>{ggplot2}</code>. If you need to add packages for your project,
-rerun the command above, but add the needed packages to
-<code>r_pkgs</code>. Beware that if your already have a
-<code>default.nix</code> file in the working directory, running
-<code>rix()</code> with the <code>overwrite = TRUE</code> argument will
-overwrite it! So make sure that you are using a version control system
-for your projects to avoid bad surprises.</p>
-<p>More details about managing project-specific <code>default.nix</code>
-are detailled in the vignette
-<code>vignette(&quot;installing-r-packages&quot;)</code> and
-<code>vignette(&quot;installing-system-tools&quot;)</code>.</p>
-<p>You could also include <code>{rix}</code> in your project-specific
-environments, by generating a <code>default.nix</code> like so:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="cn">NULL</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;rix&quot;</span>,</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ropensci/rix&quot;</span>,</span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;76d1bdd03d78589d399b4b9d473ecde616920a82&quot;</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  ),</span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>)</span></code></pre></div>
-<p>Change the commit to a more recent one and adapt the
-<code>project_path</code> argument if needed.</p>
+<p>This should launch an R session directly in your terminal. From there
+you can run something like:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">library</span>(rix)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;4.4.2&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>),</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="at">system_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>This generates a <code>default.nix</code>, which you can then use to
+build an environment with R, <code>{dplyr}</code>, and
+<code>{ggplot2}</code>. To add more packages later, rerun the command
+with the additional packages listed in <code>r_pkgs</code>. Be careful:
+if a <code>default.nix</code> already exists in your working directory,
+running <code>rix()</code> with <code>overwrite = TRUE</code> will
+overwrite it — so make sure you’re using version control to avoid
+unpleasant surprises.</p>
+<p>For more on managing project-specific <code>default.nix</code> files,
+see the <code>vignette(&quot;installing-r-packages&quot;)</code> and
+<code>vignette(&quot;installing-system-tools&quot;)</code> vignettes.</p>
+<p>You can also include <code>{rix}</code> itself in your
+project-specific environments by generating a <code>default.nix</code>
+like this:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">rix</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="at">r_ver =</span> <span class="st">&quot;latest-upstream&quot;</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="at">r_pkgs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="at">git_pkgs =</span> <span class="fu">list</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>    <span class="at">package_name =</span> <span class="st">&quot;rix&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    <span class="at">repo_url =</span> <span class="st">&quot;https://github.com/ropensci/rix&quot;</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>    <span class="at">commit =</span> <span class="st">&quot;76d1bdd03d78589d399b4b9d473ecde616920a82&quot;</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  ),</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  <span class="at">ide =</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="at">project_path =</span> <span class="st">&quot;.&quot;</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>)</span></code></pre></div>
+<p>Update the commit to a more recent one and adjust
+<code>project_path</code> as needed.</p>
 </div>
-<div id="case-2-you-have-r-installed-through-your-oss-package-manager" class="section level2">
-<h2>Case 2: you have R installed through your OS’s package manager</h2>
-<p><em>Note: this package’s authors recommend you only have R versions
-managed by Nix, and not mix a system-wide installation of R with
-Nix-managed R shells.</em></p>
-<p>If you have installed R on your system through the usual means of
-installation (so not with Nix, as described before), you can install the
-<code>{rix}</code> package as usual as well. To install
-<code>{rix}</code>, run:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>)</span></code></pre></div>
-<p>or use r-universe:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>))</span></code></pre></div>
-<p>You can then use the <code>{rix}</code> package to generate
-expressions. Consult the next vignette
-<code>vignette(&quot;project-environments&quot;)</code> to learn more.</p>
+<div id="case-2-you-already-have-r-installed-via-your-oss-package-manager" class="section level3">
+<h3>Case 2: you already have R installed via your OS’s package
+manager</h3>
+<p><em>Note: we recommend managing all your R versions through Nix
+rather than mixing a system-wide R installation with Nix-managed R
+shells.</em></p>
+<p>If R is already installed on your system through the usual channels
+(i.e., not via Nix), you can still install <code>{rix}</code> as you
+normally would:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>)</span></code></pre></div>
+<p>Or via r-universe:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rix&quot;</span>, <span class="at">repos =</span> <span class="fu">c</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="st">&quot;https://ropensci.r-universe.dev&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="st">&quot;https://cloud.r-project.org&quot;</span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>))</span></code></pre></div>
+<p>From there, use <code>{rix}</code> to generate expressions as
+described in the next vignette,
+<code>vignette(&quot;project-environments&quot;)</code>.</p>
+</div>
 </div>
 <div id="configuring-an-ide" class="section level2">
 <h2>Configuring an IDE</h2>
-<p>We recommend you continue with the next vignettes vignette
+<p>Next, we recommend continuing with
 <code>vignette(&quot;installing-r-packages&quot;)</code> and
-<code>vignette(&quot;installing-system-tools&quot;)</code>, and also
-<code>vignette(&quot;configuring-ide&quot;)</code> which will guide you through
-setting you your editor to use Nix shells effectively.</p>
+<code>vignette(&quot;installing-system-tools&quot;)</code>, followed by
+<code>vignette(&quot;configuring-ide&quot;)</code>, which walks through setting up
+your editor to work with Nix shells effectively.</p>
 </div>
 <div id="other-nixes" class="section level2">
 <h2>Other “Nix”es</h2>
-<p>There are several implementations of the Nix package manager that you
-might want to try if you’re feeling adventurous… for now, we recommend
-to stick with Nix.</p>
-<p>You can give <a href="https://lix.systems/install/">Lix</a> a try, or
-<a href="https://tvix.dev/">Tvix</a>.</p>
+<p>Several other implementations of the Nix package manager exist, if
+you’re feeling adventurous — but for now, we recommend sticking with Nix
+itself. If you’re curious, check out <a href="https://lix.systems/install/">Lix</a>!</p>
 </div>
 
 
